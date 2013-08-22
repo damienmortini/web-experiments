@@ -1,4 +1,4 @@
 web-experiments
 ===============
 
-Some of my experiments on the internet
+Some experiments on the internet
