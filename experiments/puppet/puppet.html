@@ -38,7 +38,9 @@
 	function init() {
 
 		camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
-		camera.position.z = 5;
+		camera.position.z = 4;
+		camera.position.x = 4;
+		camera.position.y = 2;
 
 		scene = new THREE.Scene();
 
@@ -53,7 +55,6 @@
 		geometry = new THREE.Geometry();
 		material = new THREE.MeshPhongMaterial({color:new THREE.Color(0xffff00), skinning: true})
 
-
 		var loader = new THREE.JSONLoader(); 
 		loader.load("simple-head.js", function (data) {
 			mesh = new THREE.SkinnedMesh( data, material );
@@ -62,11 +63,6 @@
 
 		q1 = new THREE.Quaternion( -0.2, 0, 0, 0.986 );
 		q2 = new THREE.Quaternion( 0.3, 0, 0, 0.946 );
-
-		velocities = [];
-		for (var i = 0; i < geometry.vertices.length; i++) {
-			velocities.push({x:Math.random(), y:Math.random(), z:Math.random()});
-		}
 
 		if (window.WebGLRenderingContext && document.createElement('canvas').getContext("webgl"))
 			renderer = new THREE.WebGLRenderer();
@@ -96,6 +92,7 @@
 				// handDirection.y += (frame.hands[0].direction[1] - handDirection.y) * .1;
 				// handDirection.z += (frame.hands[0].direction[2] - handDirection.z) * .1;
 			}
+			else handSphereRadius = 50;
 		});
 		controller.connect();
 	}
@@ -106,7 +103,10 @@
 
 		controls.update();
 
-		slerpTime += (Math.abs((handSphereRadius - 50) / 50) - slerpTime) * .5; 
+		var newSlerpTime = Math.abs((handSphereRadius - 50) / 50);
+		if(newSlerpTime > 1) newSlerpTime = 1;
+		if(newSlerpTime < 0) newSlerpTime = 0;
+		slerpTime += (newSlerpTime - slerpTime) * .5;
 
 		if(mesh) {
 			var a = handNormal.cross(worldNormal).normalize();
