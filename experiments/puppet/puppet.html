@@ -22,11 +22,11 @@
 	var geometry, material, mesh;
 	var q1, q2;
 
-	var time = 0;
 	var slerpTime = 0;
 
 	var handSphereRadius = 0;
-	var handNormal = new THREE.Vector3( 0, -1, 0 );
+	var handNormal = new THREE.Vector3();
+	var handDirection = new THREE.Vector3();
 	var worldNormal = new THREE.Vector3( 0, 1, 0 );
 
 	var velocities;
@@ -58,11 +58,6 @@
 		loader.load("simple-head.js", function (data) {
 			mesh = new THREE.SkinnedMesh( data, material );
 			scene.add( mesh );
-			// console.log(data);
-			// for (var i = 0; i < mesh.bones.length; i++) {
-			// 	mesh.bones[i].useQuaternion = false;
-			// };
-			console.log(mesh);
 		});
 
 		q1 = new THREE.Quaternion( -0.2, 0, 0, 0.986 );
@@ -87,11 +82,20 @@
 		controller.on( 'frame' , function( frame ){
 			if(frame.hands[0]) {
 				handSphereRadius = frame.hands[0].sphereRadius;
-				handNormal.x += (frame.hands[0].palmNormal[0] - handNormal.x) * .1;
-				handNormal.y += (frame.hands[0].palmNormal[1] - handNormal.y) * .1;
-				handNormal.z += (frame.hands[0].palmNormal[2] - handNormal.z) * .1;
+				handNormal.x = frame.hands[0].palmNormal[0];
+				handNormal.y = frame.hands[0].palmNormal[1];
+				handNormal.z = frame.hands[0].palmNormal[2];
+				handDirection.x = frame.hands[0].direction[0];
+				handDirection.y = frame.hands[0].direction[1];
+				handDirection.z = frame.hands[0].direction[2];
+				// easing
+				// handNormal.x += (frame.hands[0].palmNormal[0] - handNormal.x) * .1;
+				// handNormal.y += (frame.hands[0].palmNormal[1] - handNormal.y) * .1;
+				// handNormal.z += (frame.hands[0].palmNormal[2] - handNormal.z) * .1;
+				// handDirection.x += (frame.hands[0].direction[0] - handDirection.x) * .1;
+				// handDirection.y += (frame.hands[0].direction[1] - handDirection.y) * .1;
+				// handDirection.z += (frame.hands[0].direction[2] - handDirection.z) * .1;
 			}
-			// console.log(frame.hands[0]);
 		});
 		controller.connect();
 	}
@@ -102,22 +106,14 @@
 
 		controls.update();
 
-		var t = 0;
-
-		// console.log(handSphereRadius);
 		slerpTime += (Math.abs((handSphereRadius - 50) / 50) - slerpTime) * .5; 
-		// console.log(slerpTime);
-
-		// mesh.bones[0].quaternion = 
 
 		if(mesh) {
 			var a = handNormal.cross(worldNormal).normalize();
-			mesh.quaternion.set(a.x, a.y, a.z, 1);
+			// mesh.quaternion.set(a.x, a.y, a.z, 1); // uncomment that for some glitchy fun
 			mesh.quaternion.w = Math.sqrt(Math.pow(handNormal.length(), 2) * Math.pow(worldNormal.length(), 2)) + handNormal.dot(worldNormal);
 			THREE.Quaternion.slerp(q1, q2, mesh.bones[1].quaternion, slerpTime);
 		}
-
-		time++;
 
 		renderer.render( scene, camera );
 	}
