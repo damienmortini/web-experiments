@@ -23,7 +23,7 @@
 		</style>
 </head>
 <body>
-	<video id="video" controls autoplay muted></video>
+	<video id="video" controls autoplay></video>
 	<canvas id="scene"></canvas>
 	<script type="text/javascript" src="../../libs/dat-gui/0.5/dat.gui.min.js"></script>
 	<script type="text/javascript" src="../../libs/three.js/r61/three.js"></script>
@@ -917,7 +917,7 @@
 			gui.add(this, 'currentShader', [ 'Instagram', 'Color', 'Edges', 'Chromatic', 'Blur', 'BarrelBlur', 'Crosshatch', 'TV'] ).onChange(changeShader.bind(this));
 			gui.add(this, 'enableFilter').onChange(function (value) {
 				if(value) changeShader.call(this, this.currentShader);
-				else changeShader('normal');
+				else changeShader('Normal');
 			}.bind(this)).listen();
 			gui.add(video, 'src', [ 'video1.mp4', 'video2.mp4'] );
 
