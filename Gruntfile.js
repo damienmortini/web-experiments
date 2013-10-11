@@ -10,7 +10,7 @@ module.exports = function (grunt) {
                     livereload: '<%= connect.livereload.options.livereload %>'
                 },
                 files: [
-                    '**/*'
+                    'experiments/**/*'
                 ]
             }
         },
