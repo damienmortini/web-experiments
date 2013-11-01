@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<style type="text/css">
+		html, body {
+			margin: 0;
+			overflow: hidden;
+			width: 100%;
+			height: 100%;
+		}
+	</style>
+</head>
+<body>
+<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/three.js/r58/three.min.js"></script>
+<script type="x-shader/x-vertex" id="vertexshader">
+
+	uniform float amplitude;
+
+	attribute float random;
+
+	varying vec3 vNormal;
+	varying vec2 vUv;
+
+	varying float vRandom;
+
+	void main() {
+		vRandom = position.y / 50.0;
+
+		// vNormal = normal;
+		// vUv = ( 0.5 + amplitude ) * uv + vec2( amplitude );
+
+
+
+		gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+	}
+
+</script>
+
+<script type="x-shader/x-fragment" id="fragmentshader">
+
+	varying vec3 vNormal;
+	varying vec2 vUv;
+	varying float vRandom;
+
+	uniform vec3 color;
+
+	void main() {
+		gl_FragColor = vec4(0.0, 0.0, 0.0, vRandom * .5);
+	}
+
+</script>
+<script type="text/javascript">
+	var camera, scene, renderer;
+	var geometry, material, mesh;
+
+	var velocities;
+
+	init();
+	animate();
+
+	function init() {
+
+		camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
+		camera.position.z = 50;
+		camera.position.y = 20;
+
+		scene = new THREE.Scene();
+
+		geometry = new THREE.Geometry();
+
+		for (var i = 0; i < 80; i++) {
+			var vector = new THREE.Vector3(Math.random() * 20 - 10, Math.random() * 20 - 10, Math.random() * 20 - 10);
+			geometry.vertices.push(vector);
+		};
+
+		i = 0;
+		while (i < geometry.vertices.length - 2) {
+			j = i + 1;
+			while (j < geometry.vertices.length - 1) {
+				k = j + 1;
+				while (k < geometry.vertices.length) {
+					if (Math.random() < .1) {
+						geometry.faces.push(new THREE.Face3(i, j, k));
+					}
+					k++;
+				}
+				j++;
+			}
+			i++;
+		}
+
+		geometry.computeFaceNormals(); 
+
+		// material = new THREE.MeshBasicMaterial({vertexColors: THREE.VertexColors})
+
+		attributes = {
+			random: {	type: 'f', value: [] }
+		};
+
+		uniforms = {
+			amplitude: { type: "f", value: 1.0 },
+			color:     { type: "c", value: new THREE.Color( 0xff2200 ) },
+		};
+
+		var material = new THREE.ShaderMaterial( {
+			uniforms: 		uniforms,
+			attributes:     attributes,
+			vertexShader:   document.getElementById( 'vertexshader' ).textContent,
+			fragmentShader: document.getElementById( 'fragmentshader' ).textContent
+		});
+
+		material.transparent = true;
+
+		for (var i = 0; i < geometry.faces.length; i++) {
+			face = geometry.faces[i];
+			face.vertexColors = [new THREE.Color(0xff0000), new THREE.Color(0x00ff00), new THREE.Color(0x0000ff)];
+		};
+
+		for (var i = 0; i < geometry.vertices.length; i++) {
+			attributes.random.value.push(Math.random());
+		};
+
+		mesh = new THREE.Mesh( geometry, material );
+		console.log(mesh);
+		scene.add( mesh );
+
+		velocities = [];
+		for (var i = 0; i < geometry.vertices.length; i++) {
+			velocities.push({x:Math.random(), y:Math.random(), z:Math.random()});
+		}
+
+		if (window.WebGLRenderingContext && document.createElement('canvas').getContext("webgl"))
+			renderer = new THREE.WebGLRenderer();
+		else
+			renderer = new THREE.CanvasRenderer();
+		renderer.setSize( window.innerWidth, window.innerHeight );
+
+		console.log(geometry);
+
+		document.body.appendChild( renderer.domElement );
+	}
+
+	function animate() {
+
+		requestAnimationFrame( animate );
+
+		for (var i = 0; i < geometry.vertices.length; i++) {
+			vertice = geometry.vertices[i]
+			vertice.y += velocities[i].y;
+			// vertice.y += velocities[i].y;
+			// vertice.z += velocities[i].z;
+			if (vertice.x > 50 || vertice.y > 50 || vertice.z > 50) {
+				vertice.y = -50;
+				velocity = velocities[i];
+				velocity.x = Math.random();
+				velocity.y = Math.random();
+				velocity.z = Math.random();
+			}
+		};
+
+		geometry.verticesNeedUpdate = true;
+
+		// mesh.rotation.x += 0.01;
+		// mesh.rotation.y += 0.02;
+
+		renderer.render( scene, camera );
+	}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<html>
+<head>
+    <title></title>
+    <style>
+        body {
+            background: #fafafa;
+        }
+
+        img {
+            max-width: 800px;
+            max-height: 600px;
+            -webkit-filter: custom(url(./shaders/splats.vert) mix(url(./shaders/splats.frag) normal source-atop), 1 1, time 0.0);
+            -webkit-transition: -webkit-filter ease-in-out 1s;
+        }
+
+        img:hover {
+            -webkit-filter: custom(url(./shaders/splats.vert) mix(url(./shaders/splats.frag) normal source-atop), 1 1, time 1.0);
+        }
+    </style>
+</head>
+<body>
+    <img src="images/image.jpg">
+</body>
+</html>

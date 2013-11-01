@@ -122,7 +122,7 @@
 
 		for (var j = 0; j < this.ROWS; j++) {
 			for (var i = 0; i < this.COLUMNS; i++) {
-				var point = new Point(i * this.SPACE + offsetX, j * this.SPACE);
+				var point = new Point(i * this.SPACE + offsetX, j * this.SPACE + 100);
 				if(i != 0) this.links.push(new Link(point, this.points[j * this.COLUMNS + i - 1]));
 				if(j != 0) this.links.push(new Link(point, this.points[(j - 1) * this.COLUMNS + i]));
 				if(Math.random() > .99) point.fixed = true;
