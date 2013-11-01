@@ -781,6 +781,47 @@
 		}
 	</script>
 
+	<!-- 
+	  /$$$$$$  /$$ /$$   /$$               /$$                  
+	 /$$__  $$| $$|__/  | $$              | $$                  
+	| $$  \__/| $$ /$$ /$$$$$$    /$$$$$$$| $$$$$$$             
+	| $$ /$$$$| $$| $$|_  $$_/   /$$_____/| $$__  $$            
+	| $$|_  $$| $$| $$  | $$    | $$      | $$  \ $$            
+	| $$  \ $$| $$| $$  | $$ /$$| $$      | $$  | $$            
+	|  $$$$$$/| $$| $$  |  $$$$/|  $$$$$$$| $$  | $$            
+	 \______/ |__/|__/   \___/   \_______/|__/  |__/            
+	                                                            
+	                                                            
+	                                                            
+	  /$$$$$$  /$$                       /$$                    
+	 /$$__  $$| $$                      | $$                    
+	| $$  \__/| $$$$$$$   /$$$$$$   /$$$$$$$  /$$$$$$   /$$$$$$ 
+	|  $$$$$$ | $$__  $$ |____  $$ /$$__  $$ /$$__  $$ /$$__  $$
+	 \____  $$| $$  \ $$  /$$$$$$$| $$  | $$| $$$$$$$$| $$  \__/
+	 /$$  \ $$| $$  | $$ /$$__  $$| $$  | $$| $$_____/| $$      
+	|  $$$$$$/| $$  | $$|  $$$$$$$|  $$$$$$$|  $$$$$$$| $$      
+	 \______/ |__/  |__/ \_______/ \_______/ \_______/|__/      
+	                                                            
+	                                                            
+	                                                            
+	 -->
+
+	<script id="fragmentShaderGlitch" type="x-shader/x-fragment">
+		uniform sampler2D uTexture;
+
+		varying vec2 vUv;
+
+		void main()	{
+			vec4 fragColor = texture2D(uTexture, vUv);
+			vec4 fragResult = fragColor;
+			vec3 colorDesaturate = vec3(dot(vec3(0.3, 0.59, 0.11), fragColor.rgb)); // desaturate
+			float ratio = dot(vec3(1.0, 1.0, 0.0), fragColor.rgb);
+			fragResult.rgb = mix(colorDesaturate, fragColor.rgb, pow(ratio, 10.0));
+
+			gl_FragColor = fragResult;
+		}
+	</script>
+
 	<!--
 	 /$$$$$$$$ /$$    /$$                                       
 	|__  $$__/| $$   | $$                                       
@@ -914,7 +955,7 @@
 			build.call(this);
 
 			var gui = new dat.GUI();
-			gui.add(this, 'currentShader', [ 'Instagram', 'Color', 'Edges', 'Chromatic', 'Blur', 'BarrelBlur', 'Crosshatch', 'TV'] ).onChange(changeShader.bind(this));
+			gui.add(this, 'currentShader', [ 'Instagram', 'Color', 'Glitch', 'Edges', 'Chromatic', 'Blur', 'BarrelBlur', 'Crosshatch', 'TV'] ).onChange(changeShader.bind(this));
 			gui.add(this, 'enableFilter').onChange(function (value) {
 				if(value) changeShader.call(this, this.currentShader);
 				else changeShader('Normal');
