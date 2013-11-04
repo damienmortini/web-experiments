@@ -43,7 +43,7 @@
 		else {
 			var velX = this._nextPosition.x - this._previousPosition.x;
 			var velY = this._nextPosition.y - this._previousPosition.y;
-			 
+
 			this._previousPosition.x = this._nextPosition.x;
 			this._previousPosition.y = this._nextPosition.y;
 
@@ -74,7 +74,6 @@
 		var diffX = this.p1._nextPosition.x - this.p2._nextPosition.x;
 		var diffY = this.p1._nextPosition.y - this.p2._nextPosition.y;
 		var distance = Math.sqrt(diffX * diffX + diffY * diffY);
-
 		var difference = (this._distance - distance) / distance;
 		var translateX = diffX * 0.5 * difference;
 		var translateY = diffY * 0.5 * difference;
