@@ -30,6 +30,8 @@
 	<body>
 		<div id="container"></div>
 
+		<script type="text/javascript" src="../../bower_components/threejs/build/three.js"></script>
+
 		<script type="x-shader/x-vertex" id="vertexshader">
 
 			uniform float time;
@@ -39,7 +41,7 @@
 				vec4 newPosition = modelViewMatrix * vec4( position, 1.0 );
 				newPosition.xyz += 30.0 * cos(time*0.5+newPosition.xyz/25.0);
 				gl_Position = projectionMatrix * newPosition;
-			} 
+			}
 
 		</script>
 
@@ -55,8 +57,6 @@
 			}
 		</script>
 
-		<script src="http://cdnjs.cloudflare.com/ajax/libs/three.js/r58/three.min.js"></script>
-
 		<script>
 
 		var renderer, stats;
@@ -65,32 +65,33 @@
 		animate();
 
 		function init() {
-	        this.scene = new THREE.Scene();
+			this.scene = new THREE.Scene();
 
-	        this.camera = new THREE.OrthographicCamera(window.innerWidth * -0.5, window.innerWidth * 0.5, window.innerHeight * 0.5, window.innerHeight * -0.5, -1000, 1000);
-	        this.camera.position.z = 500;
-	        this.scene.add( this.camera );
+			this.camera = new THREE.OrthographicCamera(window.innerWidth * -0.5, window.innerWidth * 0.5, window.innerHeight * 0.5, window.innerHeight * -0.5, -1000, 1000);
+			this.camera.position.z = 500;
+			this.scene.add( this.camera );
 
-	        var geometry = new THREE.IcosahedronGeometry( 200, 6 );
-	        
-	        this.uniforms = {
-	          time : { type: "f", value: 1.0 },
-	          mouse : { type: "v2", value: new THREE.Vector2() },
-	          size : { type: "v2", value: new THREE.Vector2(50,50) }
-	        };
+			var geometry = new THREE.IcosahedronGeometry( 200, 6 );
+			
+			this.uniforms = {
+				time : { type: "f", value: 1.0 },
+				mouse : { type: "v2", value: new THREE.Vector2() },
+				size : { type: "v2", value: new THREE.Vector2(50,50) }
+			};
 
-	        var material = new THREE.ShaderMaterial({
-	            uniforms: this.uniforms,
-	            vertexShader: document.getElementById( 'vertexshader' ).textContent,
-	            fragmentShader: document.getElementById( 'fragmentshader' ).textContent,
-	            wireframe: true
-	        });
+			var material = new THREE.ShaderMaterial({
+				uniforms: this.uniforms,
+				vertexShader: document.getElementById( 'vertexshader' ).textContent,
+				fragmentShader: document.getElementById( 'fragmentshader' ).textContent,
+				wireframe: true
+			});
 
-	        this.mesh = new THREE.Mesh( geometry, material );
-	        this.scene.add( this.mesh );
+			this.mesh = new THREE.Mesh( geometry, material );
+			this.scene.add( this.mesh );
 
-	        renderer = new THREE.WebGLRenderer( {antialias:true} );
-	        renderer.setSize( window.innerWidth, window.innerHeight );
+			renderer = new THREE.WebGLRenderer( {antialias:true} );
+			renderer.setClearColor(0xffffff);
+			renderer.setSize( window.innerWidth, window.innerHeight );
 
 			var container = document.getElementById( 'container' );
 			container.appendChild( renderer.domElement );
