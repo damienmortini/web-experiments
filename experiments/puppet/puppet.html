@@ -12,11 +12,10 @@
 	</style>
 </head>
 <body>
-<script type="text/javascript" src="../three.js/r61/three.js"></script>
-<script type="text/javascript" src="../leapjs/0.1.2/leap.js"></script>
-<script>
-	THREE.TrackballControls=function(a,b){function r(a){c.enabled!==!1&&(window.removeEventListener("keydown",r),g=f,f===d.NONE&&(a.keyCode!==c.keys[d.ROTATE]||c.noRotate?a.keyCode!==c.keys[d.ZOOM]||c.noZoom?a.keyCode!==c.keys[d.PAN]||c.noPan||(f=d.PAN):f=d.ZOOM:f=d.ROTATE))}function s(){c.enabled!==!1&&(f=g,window.addEventListener("keydown",r,!1))}function t(a){c.enabled!==!1&&(a.preventDefault(),a.stopPropagation(),f===d.NONE&&(f=a.button),f!==d.ROTATE||c.noRotate?f!==d.ZOOM||c.noZoom?f!==d.PAN||c.noPan||(o=c.getMouseOnScreen(a.clientX,a.clientY),p.copy(o)):(k=c.getMouseOnScreen(a.clientX,a.clientY),l.copy(k)):(i=c.getMouseProjectionOnBall(a.clientX,a.clientY),j.copy(i)),document.addEventListener("mousemove",u,!1),document.addEventListener("mouseup",v,!1))}function u(a){c.enabled!==!1&&(a.preventDefault(),a.stopPropagation(),f!==d.ROTATE||c.noRotate?f!==d.ZOOM||c.noZoom?f!==d.PAN||c.noPan||(p=c.getMouseOnScreen(a.clientX,a.clientY)):l=c.getMouseOnScreen(a.clientX,a.clientY):j=c.getMouseProjectionOnBall(a.clientX,a.clientY))}function v(a){c.enabled!==!1&&(a.preventDefault(),a.stopPropagation(),f=d.NONE,document.removeEventListener("mousemove",u),document.removeEventListener("mouseup",v))}function w(a){if(c.enabled!==!1){a.preventDefault(),a.stopPropagation();var b=0;a.wheelDelta?b=a.wheelDelta/40:a.detail&&(b=-a.detail/3),k.y+=.01*b}}function x(a){if(c.enabled!==!1)switch(a.touches.length){case 1:f=d.TOUCH_ROTATE,i=j=c.getMouseProjectionOnBall(a.touches[0].pageX,a.touches[0].pageY);break;case 2:f=d.TOUCH_ZOOM;var b=a.touches[0].pageX-a.touches[1].pageX,e=a.touches[0].pageY-a.touches[1].pageY;n=m=Math.sqrt(b*b+e*e);break;case 3:f=d.TOUCH_PAN,o=p=c.getMouseOnScreen(a.touches[0].pageX,a.touches[0].pageY);break;default:f=d.NONE}}function y(a){if(c.enabled!==!1)switch(a.preventDefault(),a.stopPropagation(),a.touches.length){case 1:j=c.getMouseProjectionOnBall(a.touches[0].pageX,a.touches[0].pageY);break;case 2:var b=a.touches[0].pageX-a.touches[1].pageX,e=a.touches[0].pageY-a.touches[1].pageY;n=Math.sqrt(b*b+e*e);break;case 3:p=c.getMouseOnScreen(a.touches[0].pageX,a.touches[0].pageY);break;default:f=d.NONE}}function z(a){if(c.enabled!==!1){switch(a.touches.length){case 1:i=j=c.getMouseProjectionOnBall(a.touches[0].pageX,a.touches[0].pageY);break;case 2:m=n=0;break;case 3:o=p=c.getMouseOnScreen(a.touches[0].pageX,a.touches[0].pageY)}f=d.NONE}}var c=this,d={NONE:-1,ROTATE:0,ZOOM:1,PAN:2,TOUCH_ROTATE:3,TOUCH_ZOOM:4,TOUCH_PAN:5};this.object=a,this.domElement=void 0!==b?b:document,this.enabled=!0,this.screen={left:0,top:0,width:0,height:0},this.rotateSpeed=1,this.zoomSpeed=1.2,this.panSpeed=.3,this.noRotate=!1,this.noZoom=!1,this.noPan=!1,this.noRoll=!1,this.staticMoving=!1,this.dynamicDampingFactor=.2,this.minDistance=0,this.maxDistance=1/0,this.keys=[65,83,68],this.target=new THREE.Vector3;var e=new THREE.Vector3,f=d.NONE,g=d.NONE,h=new THREE.Vector3,i=new THREE.Vector3,j=new THREE.Vector3,k=new THREE.Vector2,l=new THREE.Vector2,m=0,n=0,o=new THREE.Vector2,p=new THREE.Vector2;this.target0=this.target.clone(),this.position0=this.object.position.clone(),this.up0=this.object.up.clone();var q={type:"change"};this.handleResize=function(){this.domElement===document?(this.screen.left=0,this.screen.top=0,this.screen.width=window.innerWidth,this.screen.height=window.innerHeight):this.screen=this.domElement.getBoundingClientRect()},this.handleEvent=function(a){"function"==typeof this[a.type]&&this[a.type](a)},this.getMouseOnScreen=function(a,b){return new THREE.Vector2((a-c.screen.left)/c.screen.width,(b-c.screen.top)/c.screen.height)},this.getMouseProjectionOnBall=function(a,b){var d=new THREE.Vector3((a-.5*c.screen.width-c.screen.left)/(.5*c.screen.width),(.5*c.screen.height+c.screen.top-b)/(.5*c.screen.height),0),e=d.length();c.noRoll?d.z=e<Math.SQRT1_2?Math.sqrt(1-e*e):.5/e:e>1?d.normalize():d.z=Math.sqrt(1-e*e),h.copy(c.object.position).sub(c.target);var f=c.object.up.clone().setLength(d.y);return f.add(c.object.up.clone().cross(h).setLength(d.x)),f.add(h.setLength(d.z)),f},this.rotateCamera=function(){var a=Math.acos(i.dot(j)/i.length()/j.length());if(a){var b=(new THREE.Vector3).crossVectors(i,j).normalize(),d=new THREE.Quaternion;a*=c.rotateSpeed,d.setFromAxisAngle(b,-a),h.applyQuaternion(d),c.object.up.applyQuaternion(d),j.applyQuaternion(d),c.staticMoving?i.copy(j):(d.setFromAxisAngle(b,a*(c.dynamicDampingFactor-1)),i.applyQuaternion(d))}},this.zoomCamera=function(){if(f===d.TOUCH_ZOOM){var a=m/n;m=n,h.multiplyScalar(a)}else{var a=1+(l.y-k.y)*c.zoomSpeed;1!==a&&a>0&&(h.multiplyScalar(a),c.staticMoving?k.copy(l):k.y+=(l.y-k.y)*this.dynamicDampingFactor)}},this.panCamera=function(){var a=p.clone().sub(o);if(a.lengthSq()){a.multiplyScalar(h.length()*c.panSpeed);var b=h.clone().cross(c.object.up).setLength(a.x);b.add(c.object.up.clone().setLength(a.y)),c.object.position.add(b),c.target.add(b),c.staticMoving?o=p:o.add(a.subVectors(p,o).multiplyScalar(c.dynamicDampingFactor))}},this.checkDistances=function(){c.noZoom&&c.noPan||(h.lengthSq()>c.maxDistance*c.maxDistance&&c.object.position.addVectors(c.target,h.setLength(c.maxDistance)),h.lengthSq()<c.minDistance*c.minDistance&&c.object.position.addVectors(c.target,h.setLength(c.minDistance)))},this.update=function(){h.subVectors(c.object.position,c.target),c.noRotate||c.rotateCamera(),c.noZoom||c.zoomCamera(),c.noPan||c.panCamera(),c.object.position.addVectors(c.target,h),c.checkDistances(),c.object.lookAt(c.target),e.distanceToSquared(c.object.position)>0&&(c.dispatchEvent(q),e.copy(c.object.position))},this.reset=function(){f=d.NONE,g=d.NONE,c.target.copy(c.target0),c.object.position.copy(c.position0),c.object.up.copy(c.up0),h.subVectors(c.object.position,c.target),c.object.lookAt(c.target),c.dispatchEvent(q),e.copy(c.object.position)},this.domElement.addEventListener("contextmenu",function(a){a.preventDefault()},!1),this.domElement.addEventListener("mousedown",t,!1),this.domElement.addEventListener("mousewheel",w,!1),this.domElement.addEventListener("DOMMouseScroll",w,!1),this.domElement.addEventListener("touchstart",x,!1),this.domElement.addEventListener("touchend",z,!1),this.domElement.addEventListener("touchmove",y,!1),window.addEventListener("keydown",r,!1),window.addEventListener("keyup",s,!1),this.handleResize()},THREE.TrackballControls.prototype=Object.create(THREE.EventDispatcher.prototype);
-</script>
+<script type="text/javascript" src="../../bower_components/threejs/build/three.js"></script>
+<script type="text/javascript" src="../../bower_components/leapjs/leap.js"></script>
+<script type="text/javascript" src="../../bower_components/threejs/examples/js/controls/TrackballControls.js"></script>
+
 <script type="text/javascript">
 	var camera, scene, renderer, controls;
 	var geometry, material, mesh, line;
@@ -42,7 +41,6 @@
 
 		camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
 		camera.position.z = -8;
-		// camera.position.x = 4;
 		camera.position.y = 4;
 
 		scene = new THREE.Scene();
@@ -52,33 +50,30 @@
 		var light = new THREE.DirectionalLight( 0xffffff, 1 );
 		scene.add(light);
 
-		var light = new THREE.AmbientLight( 0x660066);
+		light = new THREE.AmbientLight( 0x660066);
 		scene.add(light);
 
 		geometry = new THREE.Geometry();
-		material = new THREE.MeshPhongMaterial({color:new THREE.Color(0xffff00), skinning: true})
+		material = new THREE.MeshPhongMaterial({color:new THREE.Color(0xffff00), skinning: true});
 
 		var loader = new THREE.JSONLoader(); 
 		loader.load("head.js", function (data) {
 			mesh = new THREE.SkinnedMesh( data, material );
 			scene.add( mesh );
-			console.log(mesh);
 		});
 
 		q1 = new THREE.Quaternion( -0.25, 0, 0, 1 );
 		q2 = new THREE.Quaternion( 0.4, 0, 0, 1 );
 
-		if (window.WebGLRenderingContext && document.createElement('canvas').getContext("webgl"))
-			renderer = new THREE.WebGLRenderer();
-		else
-			renderer = new THREE.CanvasRenderer();
+		renderer = new THREE.WebGLRenderer();
+		renderer.setClearColor(0xffffff);
 		renderer.setSize( window.innerWidth, window.innerHeight );
 
-		var geometry = new THREE.Geometry();
-		    geometry.vertices.push(new THREE.Vector3(0, 0, 0));
-		    geometry.vertices.push(new THREE.Vector3(0, 0, 0));
+		var gizmoGeometry = new THREE.Geometry();
+		gizmoGeometry.vertices.push(new THREE.Vector3(0, 0, 0));
+		gizmoGeometry.vertices.push(new THREE.Vector3(0, 0, 0));
 
-		line = new THREE.Line(geometry, new THREE.LineBasicMaterial({color: 0x0000ff}));
+		line = new THREE.Line(gizmoGeometry, new THREE.LineBasicMaterial({color: 0x0000ff}));
 		scene.add(line);
 
 		document.body.appendChild( renderer.domElement );
@@ -110,16 +105,16 @@
 
 				// with easing
 
-				handSphereRadius += (hand.sphereRadius - handSphereRadius) * .5;
-				handNormal.x += (hand.palmNormal[0] - handNormal.x) * .5;
-				handNormal.y += (hand.palmNormal[1] - handNormal.y) * .5;
-				handNormal.z += (hand.palmNormal[2] - handNormal.z) * .5;
-				handDirection.x += (hand.direction[0] - handDirection.x) * .5;
-				handDirection.y += (hand.direction[1] - handDirection.y) * .5;
-				handDirection.z += (hand.direction[2] - handDirection.z) * .5;
-				handPosition.x += (hand.stabilizedPalmPosition[0] - handPosition.x) * .5;
-				handPosition.y += (hand.stabilizedPalmPosition[1] - handPosition.y) * .5;
-				handPosition.z += (hand.stabilizedPalmPosition[2] - handPosition.z) * .5;
+				handSphereRadius += (hand.sphereRadius - handSphereRadius) * 0.5;
+				handNormal.x += (hand.palmNormal[0] - handNormal.x) * 0.5;
+				handNormal.y += (hand.palmNormal[1] - handNormal.y) * 0.5;
+				handNormal.z += (hand.palmNormal[2] - handNormal.z) * 0.5;
+				handDirection.x += (hand.direction[0] - handDirection.x) * 0.5;
+				handDirection.y += (hand.direction[1] - handDirection.y) * 0.5;
+				handDirection.z += (hand.direction[2] - handDirection.z) * 0.5;
+				handPosition.x += (hand.stabilizedPalmPosition[0] - handPosition.x) * 0.5;
+				handPosition.y += (hand.stabilizedPalmPosition[1] - handPosition.y) * 0.5;
+				handPosition.z += (hand.stabilizedPalmPosition[2] - handPosition.z) * 0.5;
 			}
 			else handSphereRadius = 50;
 		});

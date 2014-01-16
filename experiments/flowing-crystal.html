@@ -12,7 +12,7 @@
 	</style>
 </head>
 <body>
-<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/three.js/r58/three.min.js"></script>
+<script type="text/javascript" src="../bower_components/threejs/build/three.js"></script>
 <script type="x-shader/x-vertex" id="vertexshader">
 
 	uniform float amplitude;
@@ -122,7 +122,6 @@
 		};
 
 		mesh = new THREE.Mesh( geometry, material );
-		console.log(mesh);
 		scene.add( mesh );
 
 		velocities = [];
@@ -130,13 +129,9 @@
 			velocities.push({x:Math.random(), y:Math.random(), z:Math.random()});
 		}
 
-		if (window.WebGLRenderingContext && document.createElement('canvas').getContext("webgl"))
-			renderer = new THREE.WebGLRenderer();
-		else
-			renderer = new THREE.CanvasRenderer();
+		renderer = new THREE.WebGLRenderer();
+		renderer.setClearColor(0xffffff);
 		renderer.setSize( window.innerWidth, window.innerHeight );
-
-		console.log(geometry);
 
 		document.body.appendChild( renderer.domElement );
 	}

@@ -33,7 +33,7 @@
 			y: this._position.y
 		};
 		this.fixed = false;
-	}
+	};
 
 	Point.prototype.update = function() {
 		if(this.fixed) {
@@ -50,13 +50,13 @@
 			this._position.x = this._nextPosition.x = this._nextPosition.x + velX;
 			this._position.y = this._nextPosition.y = this._nextPosition.y + velY;
 		}
-	}
+	};
 
 	Point.prototype.draw = function(context) {
 		context.beginPath();
 		context.arc(this._position.x,this._position.y,1,0,Math.PI*2);
 		context.fill();
-	}
+	};
 </script>
 
 <script type="text/javascript">
@@ -68,7 +68,7 @@
 		var dy = p2._position.y - p1._position.y;
 
 		this._distance = Math.sqrt(dx * dx + dy * dy);
-	}
+	};
 
 	Link.prototype.update = function() {
 		var diffX = this.p1._nextPosition.x - this.p2._nextPosition.x;
@@ -98,7 +98,7 @@
 <script type="text/javascript">
 
 	var App = function () {
-		this.SPACE = 20
+		this.SPACE = 20;
 
 		this.COLUMNS = 40;
 		this.ROWS = 30;
@@ -115,18 +115,18 @@
 		this.width = this.SPACE * this.COLUMNS;
 		this.height = this.SPACE * this.ROWS;
 
-		var offsetX = (window.innerWidth - this.width) * .5;
-		var offsetY = (window.innerHeight - this.height) * .5;
+		var offsetX = (window.innerWidth - this.width) * 0.5;
+		var offsetY = (window.innerHeight - this.height) * 0.5;
 
 		for (var j = 0; j < this.ROWS; j++) {
 			for (var i = 0; i < this.COLUMNS; i++) {
 				var point = new Point(i * this.SPACE + offsetX, j * this.SPACE + 100);
-				if(i != 0) this.links.push(new Link(point, this.points[j * this.COLUMNS + i - 1]));
-				if(j != 0) this.links.push(new Link(point, this.points[(j - 1) * this.COLUMNS + i]));
-				if(Math.random() > .99) point.fixed = true;
+				if(i !== 0) this.links.push(new Link(point, this.points[j * this.COLUMNS + i - 1]));
+				if(j !== 0) this.links.push(new Link(point, this.points[(j - 1) * this.COLUMNS + i]));
+				if(Math.random() > 0.99) point.fixed = true;
 				this.points.push(point);
 			}
-		};
+		}
 
 		this.mouse = {x:0, y:0};
 
@@ -134,7 +134,7 @@
 
 		window.addEventListener('mousemove', this.onMouseMove.bind(this));
 		window.addEventListener('resize', this.resize);
-	}
+	};
 
 	App.prototype.onMouseMove = function(e) {
 		this.mouse.x = e.pageX;
@@ -152,27 +152,27 @@
 			var dy = point._position.y - this.mouse.y;
 			var dist = Math.sqrt(dx * dx + dy * dy);
 			if (dist < 100) {
-				point._nextPosition.x += dx * (1 - dist / 100)
-				point._nextPosition.y += dy * (1 - dist / 100)
-			};
-		};
+				point._nextPosition.x += dx * (1 - dist / 100);
+				point._nextPosition.y += dy * (1 - dist / 100);
+			}
+		}
 
 		// update (order matter)
-		for (var i = this.points.length - 1; i >= 0; i--) this.points[i]._nextPosition.y += 0.981; // Gravity
+		for (i = this.points.length - 1; i >= 0; i--) this.points[i]._nextPosition.y += 0.981; // Gravity
 		for (var j = 0; j < 3; j++) {
-			for (var i = this.links.length - 1; i >= 0; i--) this.links[i].update();
-			for (var i = 0; i < this.links.length; i++) this.links[i].update();
-		};
-		for (var i = this.points.length - 1; i >= 0; i--) this.points[i].update();
+			for (i = this.links.length - 1; i >= 0; i--) this.links[i].update();
+			for (i = 0; i < this.links.length; i++) this.links[i].update();
+		}
+		for (i = this.points.length - 1; i >= 0; i--) this.points[i].update();
 
 		// draw
 		this.context.globalCompositeOperation = 'screen';
 		this.context.fillStyle = '#ffffff';
 		this.context.strokeStyle = '#334444';
-		for (var i = this.points.length - 1; i >= 0; i--) this.points[i].draw(this.context);
-		for (var i = this.links.length - 1; i >= 0; i--) this.links[i].draw(this.context);
+		for (i = this.points.length - 1; i >= 0; i--) this.points[i].draw(this.context);
+		for (i = this.links.length - 1; i >= 0; i--) this.links[i].draw(this.context);
 		this.context.stroke();
-	}
+	};
 
 	App.prototype.resize = function() {
 		if(this.timeout) clearTimeout(this.timeout);

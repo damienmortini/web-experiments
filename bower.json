@@ -1,0 +1,14 @@
+{
+  "name": "web-experiments",
+  "version": "0.0.0",
+  "dependencies": {
+    "threejs": "*",
+    "leapjs": "~0.2.2",
+    "stats.js": "*",
+    "dat-gui": "~0.5.0"
+  },
+  "devDependencies": {
+    "clmtrackr": "git://github.com/auduno/clmtrackr.git#dev"
+  },
+  "directory": "bower_components"
+}
