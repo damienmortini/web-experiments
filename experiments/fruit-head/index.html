@@ -1,20 +1,45 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Fruit head</title>
+	<title>Hey Apple!</title>
 	<style type="text/css">
 		html, body {
 			height: 100%;
 		}
 		body {
 			margin: 0;
+			background-color: #bfffec;
+			font-family: sans-serif;
+		}
+		p, h1 {
+			text-align: center;
+		}
+		.tip {
+			color: rgba(0, 0, 0, .2);
+		}
+		body:before {
+			content: "";
+			display: block;
+			position: absolute;
+			margin: auto;
+			width: 450px;
+			height: 80px;
+			top: 430px;
+			left: -20px;
+			bottom: 0;
+			right: 0;
+			background: radial-gradient(ellipse at center, rgba(0,0,0,0.4) 0%,rgba(0,0,0,0) 60%);
 		}
 		video, .tracker-canvas {
 			position: absolute;
-			top: 0;
-			left: 0;
 			width: 320px;
 			height: 240px;
+		}
+		video {
+			top: 0;
+		}
+		.tracker-canvas {
+			top: 240px;
 		}
 		.main-canvas {
 			width: 450px;
@@ -39,8 +64,12 @@
 	</style>
 </head>
 <body>
+	<!-- <h1>Hey apple!</h1> -->
+	<p>Experiment made with <a href="https://github.com/auduno/clmtrackr">clmtrackr</a></p>
+	<p class="tip">(authorize your webcam to begin)</p>
 	<video width="640" height="480" autoplay></video>
-	<img src="apple.jpg" class="background">
+	<img src="apple.png" class="background">
+	<div class="embed"></div>
 	<canvas width="640" height="480" class="main-canvas"></canvas>
 	<canvas width="640" height="480" class="tracker-canvas"></canvas>
 	<script src="../../bower_components/clmtrackr/clmtrackr.js"></script>
@@ -81,6 +110,7 @@
 			this.video = document.getElementsByTagName('video')[0];
 			this.video.src = window.URL.createObjectURL(localMediaStream);
 			this.ctracker.start(this.video);
+			document.getElementsByClassName('embed')[0].innerHTML ='<iframe width="0" height="0" src="//www.youtube.com/embed/remCqzeY06M?rel=0&autoplay=1"></iframe>';
 			this.update();
 		};
 
@@ -88,10 +118,6 @@
 			requestAnimationFrame(this.update.bind(this));
 			this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 			var positions = this.ctracker.getCurrentPosition();
-			// var mouthCenter = {
-			// 	x:(positions[60][0] + positions[57][0]) * 0.5,
-			// 	y:(positions[60][1] + positions[57][1]) * 0.5
-			// };
 
 			this.mouthRect.x = positions[44][0];
 			this.mouthRect.y = positions[46][1];
@@ -108,7 +134,7 @@
 			this.rightEyeRect.width = positions[28][0] - this.rightEyeRect.x;
 			this.rightEyeRect.height = positions[31][1] - this.rightEyeRect.y;
 
-			this.ctx.drawImage(this.video, this.mouthRect.x - ENLARGE, this.mouthRect.y - ENLARGE, this.mouthRect.width + ENLARGE * 2, this.mouthRect.height + ENLARGE * 2, 0, 240, 640, 240);
+			this.ctx.drawImage(this.video, this.mouthRect.x - ENLARGE, this.mouthRect.y - ENLARGE, this.mouthRect.width + ENLARGE * 2, this.mouthRect.height + ENLARGE * 2, -80, 240, 800, 240);
 			this.ctx.drawImage(this.video, this.leftEyeRect.x - ENLARGE, this.leftEyeRect.y - ENLARGE, this.leftEyeRect.width + ENLARGE * 2, this.leftEyeRect.height + ENLARGE * 2, 60, 40, 200, 200);
 			this.ctx.drawImage(this.video, this.rightEyeRect.x - ENLARGE, this.rightEyeRect.y - ENLARGE, this.rightEyeRect.width + ENLARGE * 2, this.rightEyeRect.height + ENLARGE * 2, 360, 40, 200, 200);
 			
@@ -141,10 +167,10 @@
 			this.trackerCtx.lineTo(positions[indices[1]][0], positions[indices[1]][1]);
 			this.trackerCtx.lineTo(positions[indices[2]][0], positions[indices[2]][1]);
 			this.trackerCtx.closePath();
+			this.trackerCtx.clip();
+			this.trackerCtx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
 			this.trackerCtx.fill();
 			this.trackerCtx.stroke();
-			// this.trackerCtx.clip();
-			// this.trackerCtx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
 			this.trackerCtx.restore();
 		};
 
