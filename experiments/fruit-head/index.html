@@ -11,12 +11,6 @@
 			background-color: #bfffec;
 			font-family: sans-serif;
 		}
-		p, h1 {
-			text-align: center;
-		}
-		.tip {
-			color: rgba(0, 0, 0, .2);
-		}
 		body:before {
 			content: "";
 			display: block;
@@ -42,11 +36,11 @@
 			top: 240px;
 		}
 		.main-canvas {
-			width: 450px;
-			height: 450px;
+			width: 100%;
+			height: 100%;
 			position: absolute;
 			margin: auto;
-			top: -40px;
+			top: 0;
 			left: 0;
 			bottom: 0;
 			right: 0;
@@ -65,12 +59,10 @@
 </head>
 <body>
 	<!-- <h1>Hey apple!</h1> -->
-	<p>Experiment made with <a href="https://github.com/auduno/clmtrackr">clmtrackr</a></p>
-	<p class="tip">(authorize your webcam to begin)</p>
 	<video width="640" height="480" autoplay></video>
 	<img src="apple.png" class="background">
 	<div class="embed"></div>
-	<canvas width="640" height="480" class="main-canvas"></canvas>
+	<canvas class="main-canvas"></canvas>
 	<canvas width="640" height="480" class="tracker-canvas"></canvas>
 	<script src="../../bower_components/clmtrackr/clmtrackr.js"></script>
 	<script src="../../bower_components/clmtrackr/models/model_pca_20_svm.js"></script>
@@ -95,14 +87,21 @@
 			this.ctracker = new clm.tracker();
 			this.ctracker.init(pModel);
 			this.canvas = document.getElementsByClassName('main-canvas')[0];
+			this.canvas.width = window.innerWidth;
+			this.canvas.height = window.innerHeight;
 			this.trackerCanvas = document.getElementsByClassName('tracker-canvas')[0];
-			this.mask = new Image();
-			this.mask.src = 'mask.png';
+			// this.mask = new Image();
+			// this.mask.src = 'mask.png';
 			this.ctx = this.canvas.getContext('2d');
 			this.trackerCtx = this.trackerCanvas.getContext('2d');
 			this.mouthRect = {x:0, y:0, width:0, height:0};
 			this.leftEyeRect = {x:0, y:0, width:0, height:0};
 			this.rightEyeRect = {x:0, y:0, width:0, height:0};
+
+			this.maskGradient = this.ctx.createRadialGradient(50,50,0,50,50,50);
+			this.maskGradient.addColorStop(0, 'rgba(255,0,0,1)');
+			this.maskGradient.addColorStop(1, 'rgba(0,0,0,1)');
+
 			navigator.getUserMedia({video: true}, this.onVideoSuccess.bind(this), function(){});
 		};
 
@@ -110,13 +109,14 @@
 			this.video = document.getElementsByTagName('video')[0];
 			this.video.src = window.URL.createObjectURL(localMediaStream);
 			this.ctracker.start(this.video);
-			document.getElementsByClassName('embed')[0].innerHTML ='<iframe width="0" height="0" src="//www.youtube.com/embed/remCqzeY06M?rel=0&autoplay=1"></iframe>';
+			// document.getElementsByClassName('embed')[0].innerHTML ='<iframe width="0" height="0" src="//www.youtube.com/embed/remCqzeY06M?rel=0&autoplay=1"></iframe>';
 			this.update();
 		};
 
 		App.prototype.update = function() {
 			requestAnimationFrame(this.update.bind(this));
 			this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
 			var positions = this.ctracker.getCurrentPosition();
 
 			this.mouthRect.x = positions[44][0];
@@ -134,17 +134,30 @@
 			this.rightEyeRect.width = positions[28][0] - this.rightEyeRect.x;
 			this.rightEyeRect.height = positions[31][1] - this.rightEyeRect.y;
 
+			this.ctx.save();
+			this.ctx.translate(100, 0);
 			this.ctx.drawImage(this.video, this.mouthRect.x - ENLARGE, this.mouthRect.y - ENLARGE, this.mouthRect.width + ENLARGE * 2, this.mouthRect.height + ENLARGE * 2, -80, 240, 800, 240);
 			this.ctx.drawImage(this.video, this.leftEyeRect.x - ENLARGE, this.leftEyeRect.y - ENLARGE, this.leftEyeRect.width + ENLARGE * 2, this.leftEyeRect.height + ENLARGE * 2, 60, 40, 200, 200);
 			this.ctx.drawImage(this.video, this.rightEyeRect.x - ENLARGE, this.rightEyeRect.y - ENLARGE, this.rightEyeRect.width + ENLARGE * 2, this.rightEyeRect.height + ENLARGE * 2, 360, 40, 200, 200);
+			this.ctx.restore();
 			
-			this.ctx.globalCompositeOperation = 'multiply';
-			this.ctx.fillStyle = 'red';
-			this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+			// this.ctx.globalCompositeOperation = 'multiply';
+			// this.ctx.fillStyle = 'red';
+			// this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-			this.ctx.globalCompositeOperation = 'destination-out';
+			// this.ctx.globalCompositeOperation = 'destination-out';
+			this.ctx.fillStyle = this.maskGradient;
+			this.ctx.rect(0, 0, this.canvas.width, this.canvas.height);
+			this.ctx.fill();
+			this.ctx.save();
+			this.ctx.translate(200, 0);
+			this.ctx.rect(0, 0, this.canvas.width, this.canvas.height);
+			// this.ctx.fill();
+			this.ctx.restore();
 
-			this.ctx.drawImage(this.mask, 0, 0, this.canvas.width, this.canvas.height);
+
+			// this.ctx.drawImage(this.mask, 0, 0, this.canvas.width, this.canvas.height);
+
 
 			this.trackerCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
