@@ -83,8 +83,6 @@
 		<script src="./ext_js/nose_filter.js"></script>
 		<script src="../models/model_pca_20_svm.js"></script>
 		<script src="../js/clm.js"></script>
-		<script src="./ext_js/ccv.js"></script>
-		<script src="./ext_js/cascade.js"></script>
 		<script src="../js/svmfilter_webgl.js"></script>
 		<script src="../js/svmfilter_fft.js"></script>
 		<script src="../js/mossefilter.js"></script>
@@ -103,7 +101,7 @@
 				<canvas id="overlay" width="625" height="500"></canvas>
 			</div>
 			<br/>
-			<input type="button" class="btn" value="start" onclick="animate()"></input>
+			<input type="button" class="btn" value="start" onclick="animateClean()"></input>
 			<input type="button" class="btn" value="manually select face" onclick="selectBox()"></input>
 			<input type="file" class="btn" id="files" name="files[]" />
 			<p id="convergence"></p>
@@ -135,6 +133,11 @@
 				
 				var drawRequest;
 				
+				function animateClean() {
+					ctrack.start(document.getElementById('image'));
+					drawLoop();
+				}
+
 				function animate(box) {
 					ctrack.start(document.getElementById('image'), box);
 					drawLoop();
@@ -236,7 +239,7 @@
 
 				// set up file selector and variables to hold selections
 				var fileList, fileIndex;
-				if (window.File && window.FileReader && window.FileList && window.FileError) {
+				if (window.File && window.FileReader && window.FileList) {
 					function handleFileSelect(evt) {
 						var files = evt.target.files;
 						fileList = [];

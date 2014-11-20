@@ -1,11 +1,11 @@
 {
   "name": "clmtrackr",
   "homepage": "https://github.com/auduno/clmtrackr",
-  "_release": "21f21857b0",
+  "_release": "8f1be2eb15",
   "_resolution": {
     "type": "branch",
     "branch": "dev",
-    "commit": "21f21857b0651310397cd0f42c3a303a74186715"
+    "commit": "8f1be2eb152378a578ef7f00aefdb6df94b14d31"
   },
   "_source": "git://github.com/auduno/clmtrackr.git",
   "_target": "dev",

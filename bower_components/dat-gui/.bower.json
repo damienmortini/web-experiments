@@ -29,7 +29,6 @@
     "commit": "fcfe534e5d62e96cdb4855b1e557e2c29d60b44b"
   },
   "_source": "git://github.com/dataarts/dat.gui.git",
-  "_target": "~0.5.0",
-  "_originalSource": "dat-gui",
-  "_direct": true
+  "_target": "*",
+  "_originalSource": "dat-gui"
 }

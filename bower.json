@@ -3,9 +3,9 @@
   "version": "0.0.0",
   "dependencies": {
     "threejs": "*",
-    "leapjs": "~0.2.2",
+    "leapjs": "*",
     "stats.js": "*",
-    "dat-gui": "~0.5.0"
+    "dat-gui": "*"
   },
   "devDependencies": {
     "clmtrackr": "git://github.com/auduno/clmtrackr.git#dev"

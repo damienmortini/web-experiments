@@ -1,33 +1,30 @@
 var Frame = require('./frame')
+  , Hand = require('./hand')
+  , Pointable = require('./pointable')
+  , Finger = require('./finger')
+  , _ = require('underscore')
+  , EventEmitter = require('events').EventEmitter;
 
 var Event = function(data) {
   this.type = data.type;
   this.state = data.state;
 };
 
-var chooseProtocol = exports.chooseProtocol = function(header) {
+exports.chooseProtocol = function(header) {
   var protocol;
   switch(header.version) {
     case 1:
-      protocol = JSONProtocol(1, function(data) {
-        return new Frame(data);
-      });
-      break;
     case 2:
-      protocol = JSONProtocol(2, function(data) {
-        return new Frame(data);
-      });
-      protocol.sendHeartbeat = function(connection) {
-        connection.send(protocol.encode({heartbeat: true}));
-      }
-      break;
     case 3:
-      protocol = JSONProtocol(3, function(data) {
-        return data.event ? new Event(data.event) : new Frame(data);
-
-      });
-      protocol.sendHeartbeat = function(connection) {
-        connection.send(protocol.encode({heartbeat: true}));
+    case 4:
+    case 5:
+    case 6:
+      protocol = JSONProtocol(header);
+      protocol.sendBackground = function(connection, state) {
+        connection.send(protocol.encode({background: state}));
+      }
+      protocol.sendFocused = function(connection, state) {
+        connection.send(protocol.encode({focused: state}));
       }
       break;
     default:
@@ -36,13 +33,39 @@ var chooseProtocol = exports.chooseProtocol = function(header) {
   return protocol;
 }
 
-var JSONProtocol = function(version, cb) {
-  var protocol = cb;
+var JSONProtocol = exports.JSONProtocol = function(header) {
+
+  var protocol = function(frameData) {
+
+    if (frameData.event) {
+
+      return new Event(frameData.event);
+
+    } else {
+
+      protocol.emit('beforeFrameCreated', frameData);
+
+      var frame = new Frame(frameData);
+
+      protocol.emit('afterFrameCreated', frame, frameData);
+
+      return frame;
+
+    }
+
+  };
+
   protocol.encode = function(message) {
     return JSON.stringify(message);
-  }
-  protocol.version = version;
-  protocol.versionLong = 'Version ' + version;
+  };
+  protocol.version = header.version;
+  protocol.serviceVersion = header.serviceVersion;
+  protocol.versionLong = 'Version ' + header.version;
   protocol.type = 'protocol';
+
+  _.extend(protocol, EventEmitter.prototype);
+
   return protocol;
 };
+
+

@@ -21,32 +21,41 @@ This class provides a simple info box that will help you monitor your code perfo
 var stats = new Stats();
 stats.setMode(1); // 0: fps, 1: ms
 
-// Align top-left
+// align top-left
 stats.domElement.style.position = 'absolute';
 stats.domElement.style.left = '0px';
 stats.domElement.style.top = '0px';
 
 document.body.appendChild( stats.domElement );
 
-setInterval( function () {
+var update = function () {
 
 	stats.begin();
 
-	// your code goes here
+	// monitored code goes here
 
 	stats.end();
+	
+	requestAnimationFrame( update );
 
-}, 1000 / 60 );
+};
+
+requestAnimationFrame( update );
 ```
 
 
 ### Bookmarklet ###
 
 Albeit theorically not as accurate the widget can also be easily inserted to **any site** using a bookmarklet.
-[Follow the instructions](http://mrdoob.com/blog/post/707).
+[Follow the instructions](http://ricardocabello.com/blog/post/707).
 
 
 ### Change Log ###
+
+2014 08 11 - **r12** (2,310 KB, gzip: 1,087 B)
+
+* Browserify support. (@Miha-ha)
+
 
 2012 09 01 - **r11** (2,243 KB, gzip: 903 B)
 

@@ -9,9 +9,9 @@ clmtrackr
 
 [Reference](http://auduno.github.io/clmtrackr/docs/reference.html) - [Overview](http://auduno.tumblr.com/post/61888277175/fitting-faces)
 
-The library provides some generic face models that were trained on [the MUCT database](http://www.milbo.org/muct/) and some additional self-annotated images. The aim is to also provide a model builder for building your own facial models.
+The library provides some generic face models that were trained on [the MUCT database](http://www.milbo.org/muct/) and some additional self-annotated images. Check out [clmtools](https://github.com/auduno/clmtools) for building your own models.
 
-The library requires [ccv.js](https://github.com/liuliu/ccv) (for initial face detection) and [numeric.js](http://numericjs.com) (for matrix math).
+The library requires [jsfeat.js](https://github.com/inspirit/jsfeat) (for initial face detection) and [numeric.js](http://numericjs.com) (for matrix math).
 
 For tracking in video, it is recommended to use a browser with WebGL support, though the library should work on any modern browser.
 
@@ -23,12 +23,13 @@ For some more information about Constrained Local Models, take a look at Xiaogua
 * [Tracking in video](http://auduno.github.io/clmtrackr/clm_video.html)
 * [Face substitution](http://auduno.github.io/clmtrackr/examples/facesubstitution.html)
 * [Face masking](http://auduno.github.io/clmtrackr/face_mask.html)
-* [Face deformation](http://auduno.github.io/clmtrackr/face_deformation_video.html)
+* [Realtime face deformation](http://auduno.github.io/clmtrackr/examples/facedeform.html)
 * [Emotion detection](http://auduno.github.io/clmtrackr/examples/clm_emotiondetection.html)
+* [Caricature](http://auduno.github.io/clmtrackr/examples/caricature.html)
 
 ### Usage ###
 
-Download the minified library [clmtrackr.js](https://github.com/auduno/clmtrackr/raw/dev/clmtrackr.js) and one of the models, and include them in your webpage. **clmtrackr** depends on [*numeric.js*](https://github.com/sloisel/numeric/) and [*ccv.js*](https://github.com/liuliu/ccv), but these are included in the minified library.
+Download the minified library [clmtrackr.js](https://github.com/auduno/clmtrackr/raw/dev/clmtrackr.js) and one of the models, and include them in your webpage. **clmtrackr** depends on [*numeric.js*](https://github.com/sloisel/numeric/) and [*jsfeat.js*](https://github.com/inspirit/jsfeat), but these are included in the minified library.
 
 ```html
 /* clmtrackr libraries */
@@ -43,7 +44,7 @@ The following code initiates the clmtrackr with the model we included, and start
   <source src="./media/somevideo.ogv" type="video/ogg"/>
 </video>
 <script type="text/javascript">
-  var videoInput = document.getElementById('video');
+  var videoInput = document.getElementById('inputVideo');
   
   var ctracker = new clm.tracker();
   ctracker.init(pModel);
