@@ -24,6 +24,7 @@
 			uniform vec2 mouse;
 
 			varying vec4 vVertexColor;
+			varying float intensity;
 
 			void main() {
 				vec4 newPosition = modelViewMatrix * vec4( position, 1.0 );
@@ -32,10 +33,14 @@
 				//newPosition.xy += 30.0 * cos(time*0.5+newPosition.xy/25.0) + mouse;
 				float d = distance( position.xy, mouse );
 				float minDistance = 200.0;
+
+				intensity = .9;
+
 				if(d < minDistance) {
 					newPosition.xy += cos(time+newPosition.yx) * sin(time+newPosition.yx) * normal.xy * (minDistance - d);
 					// newPosition.xyz += 30.0 * cos(time*0.5+newPosition.xyz/25.0);
-
+					intensity = d / minDistance;
+					// intensity = .2 + intensity * .8;
 				}
 				vVertexColor = projectionMatrix * newPosition;
 					//newPosition.xy = mouse.xy;
@@ -57,10 +62,12 @@
 			uniform float time;
 
 			varying vec4 vVertexColor;
+			varying float intensity;
 
 			void main() {
-				float greyvalue = (vVertexColor.x + vVertexColor.y + vVertexColor.z) / 3.0;
-				gl_FragColor = vec4(greyvalue, greyvalue, greyvalue, 1.0);
+				// float greyvalue = (vVertexColor.x + vVertexColor.y + vVertexColor.z) / 3.0 * intensity * .5;
+				gl_FragColor = vec4(intensity * 4., intensity * 2., intensity, 1.0);
+				// gl_FragColor = vec4(intensity * 4. + 1. + cos(time * .25) + sin(time * .75), intensity * 2. + 1. + cos(time * .5) + sin(time * .5), intensity + 1. + cos(time * .75) + sin(time * .25), 1.0);
 			}
 		</script>
 
@@ -70,6 +77,8 @@
 			var scene, camera, renderer;
 
 			var time = 0;
+			var mouseX = 0;
+			var mouseY = -1000;
 
 			var vertexShader = document.getElementById( 'vertexShader' ).textContent;
 			var fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
@@ -90,7 +99,7 @@
 
 				uniforms = {
 				  time : { type: "f", value: 1.0 },
-				  mouse : { type: "v2", value: new THREE.Vector2(99999, 99999) },
+				  mouse : { type: "v2", value: new THREE.Vector2(mouseX, -mouseY) },
 				  size : { type: "v2", value: new THREE.Vector2(100,100) }
 				};
 			   
@@ -105,7 +114,7 @@
 				scene.add( mesh );
 
 				renderer = new THREE.WebGLRenderer({antialias:true});
-				renderer.setClearColor(0xffffff);
+				renderer.setClearColor(0x222222);
 				document.body.appendChild( renderer.domElement );
 				renderer.setSize( window.innerWidth, window.innerHeight);
 
@@ -117,6 +126,8 @@
 				requestAnimationFrame(update);
 
 				time++;
+				uniforms.mouse.value.x += (mouseX - uniforms.mouse.value.x) * .1;
+				uniforms.mouse.value.y += (-mouseY - uniforms.mouse.value.y) * .1;
 				uniforms.time.value = time * 0.05;
 
 				mesh.rotation.x = mesh.rotation.y = Math.cos(time * 0.001 + Math.PI * 0.5) * 0.2;
@@ -134,10 +145,8 @@
 			};
 
  			function onMouseMove(e) {
-				var mouseX = e.pageX - window.innerWidth * .5;
-				var mouseY = e.pageY - window.innerHeight * .5;
-				uniforms.mouse.value.x = mouseX;
-				uniforms.mouse.value.y = -mouseY;
+				mouseX = e.pageX - window.innerWidth * .5;
+				mouseY = e.pageY - window.innerHeight * .5;
 			};
 		</script>
 	</body>
