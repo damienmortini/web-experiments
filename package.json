@@ -1,16 +1,10 @@
 {
   "name": "web-experiments",
   "version": "0.0.0",
-  "dependencies": {},
-  "devDependencies": {
-    "browser-sync": "^2.0.0-rc8",
-    "watch": "^0.13.0",
-    "6to5": "^3.4.1"
+  "dependencies": {
+    "browser-sync": "^2.0.0-rc9",
+    "gulp": "^3.8.10",
+    "gulp-6to5": "^3.0.0"
   },
-  "scripts": {
-    "install": "npm install && bower install",
-    "browser-sync": "browser-sync start --server --directory",
-    "6to5": "6to5 experiments --out-dir experiments",
-    "serve": "npm run browser-sync"
-  }
+  "devDependencies": {}
 }
