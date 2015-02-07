@@ -22,11 +22,11 @@
     "utils",
     "LICENSE"
   ],
-  "_release": "ca14c79920",
+  "_release": "74e7d09c26",
   "_resolution": {
     "type": "branch",
     "branch": "master",
-    "commit": "ca14c799205dd647d461bb3554d71186c4069d09"
+    "commit": "74e7d09c262d28b3a1961ddb12ad09e6317ad8ad"
   },
   "_source": "git://github.com/mrdoob/three.js.git",
   "_target": "*",

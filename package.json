@@ -3,12 +3,14 @@
   "version": "0.0.0",
   "dependencies": {},
   "devDependencies": {
-    "grunt": "~0.4.1",
-    "grunt-contrib-connect": "~0.6.0",
-    "grunt-contrib-watch": "~0.5.2",
-    "load-grunt-tasks": "~0.1.0"
+    "browser-sync": "^2.0.0-rc8",
+    "watch": "^0.13.0",
+    "6to5": "^3.4.1"
   },
-  "engines": {
-    "node": ">=0.8.0"
+  "scripts": {
+    "install": "npm install && bower install",
+    "browser-sync": "browser-sync start --server --directory",
+    "6to5": "6to5 experiments --out-dir experiments",
+    "serve": "npm run browser-sync"
   }
 }
