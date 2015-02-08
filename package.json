@@ -1,10 +1,10 @@
 {
   "name": "web-experiments",
   "version": "0.0.0",
-  "dependencies": {
+  "dependencies": {},
+  "devDependencies": {
     "browser-sync": "^2.0.0-rc9",
     "gulp": "^3.8.10",
     "gulp-6to5": "^3.0.0"
-  },
-  "devDependencies": {}
+  }
 }

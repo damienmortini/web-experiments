@@ -1,3 +1,5 @@
+'use strict';
+
 var gulp = require('gulp');
 var browserSync = require('browser-sync');
 var to5 = require('gulp-6to5');

@@ -1,4 +1,6 @@
-import World from "World";
+'use strict';
+
+import World from 'world';
 
 class Main{
   constructor() {
