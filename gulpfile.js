@@ -2,24 +2,30 @@
 
 var gulp = require('gulp');
 var browserSync = require('browser-sync');
-// var to5 = require('gulp-6to5');
-var transform = require('vinyl-transform');
+var reload = browserSync.reload;
 var buffer = require('vinyl-buffer');
+var source = require('vinyl-source-stream');
 var browserify = require('browserify');
 var to5ify = require('6to5ify');
+var sourcemaps = require('gulp-sourcemaps');
 
-// es6ModulesEntries
+var to5ifyFiles = [
+  './experiments/raymarch-physic/scripts/main.js'
+];
 
-gulp.task('scripts', function () {
-  var browserified = transform(function(filename) {
-    var b = browserify(filename);
+gulp.task('scripts', function (callback) {
+  for (var i = 0; i < to5ifyFiles.length; i++) {
+    var file = to5ifyFiles[i];
+    var b = browserify(file);
     b.transform(to5ify);
-    return b.bundle();
-  });
-
-  return gulp.src(['./experiments/**/main.js'])
-    .pipe(browserified)
-    .pipe(gulp.dest('./.tmp/'));
+    b.bundle()
+     .pipe(source(file))
+     .pipe(buffer())
+     .pipe(sourcemaps.init({loadMaps: true}))
+      .pipe(sourcemaps.write('./'))
+     .pipe(gulp.dest('./.tmp'));
+  }
+ callback();
 });
 
 gulp.task('serve', ['scripts'], function () {
@@ -29,7 +35,7 @@ gulp.task('serve', ['scripts'], function () {
     directory: true,
     open: false,
     server: {
-      baseDir: ['.tmp', 'experiments'],
+      baseDir: ['./.tmp', './'],
       routes: {
         '/bower_components': 'bower_components'
       }
@@ -38,8 +44,10 @@ gulp.task('serve', ['scripts'], function () {
 
   gulp.watch([
     'experiments/**/*',
-    '.tmp/**/*'
-  ]).on('change', browserSync.reload);
+    '!experiments/**/*.js',
+    '.tmp/**/*',
+    '!.tmp/**/*.map'
+  ]).on('change', reload);
 
   gulp.watch('experiments/**/*.js', ['scripts']);
 });
