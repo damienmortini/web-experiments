@@ -1,10 +1,10 @@
 'use strict';
 
-import World from './world';
+import ThreejsView from './threejs-view';
 
-class Main{
+class Main {
   constructor() {
-    var world = new World();
+    var view = new ThreejsView(document.querySelector('canvas'));
   }
 }
 

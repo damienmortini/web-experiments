@@ -19,10 +19,14 @@ gulp.task('scripts', function (callback) {
     var b = browserify(file);
     b.transform(to5ify);
     b.bundle()
+      .on('error', function(err){
+        console.log(err.message);
+        this.end();
+      })
      .pipe(source(file))
      .pipe(buffer())
      .pipe(sourcemaps.init({loadMaps: true}))
-      .pipe(sourcemaps.write('./'))
+     .pipe(sourcemaps.write('./'))
      .pipe(gulp.dest('./.tmp'));
   }
  callback();

@@ -2,10 +2,25 @@
 <html>
 <head>
   <title>raymarch-physic</title>
+  <style media="screen">
+    canvas {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+  </style>
 </head>
 <body>
   <canvas></canvas>
   <script src="/bower_components/threejs/build/three.js"></script>
+  <script src="/bower_components/threejs-trackballcontrols/index.js"></script>
+  <script src="/bower_components/threejs-effectcomposer/index.js"></script>
+  <script src="/bower_components/threejs-renderpass/index.js"></script>
+  <script src="/bower_components/threejs-shaderpass/index.js"></script>
+  <script src="/bower_components/threejs-fxaashader/index.js"></script>
+  <script src="/bower_components/threejs-copyshader/index.js"></script>
   <script src="./scripts/main.js"></script>
 </body>
 </html>

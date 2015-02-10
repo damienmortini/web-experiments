@@ -1,0 +1,13 @@
+{
+  "name": "threejs-renderpass",
+  "_cacheHeaders": {
+    "ETag": "\"0dcc13fe940d7be2c1b6109fbcaa12680d8470f9\"",
+    "Content-Length": "1052",
+    "Content-Type": "text/plain; charset=utf-8"
+  },
+  "_release": "e-tag:0dcc13fe9",
+  "main": "index.js",
+  "_source": "https://raw.github.com/mrdoob/three.js/master/examples/js/postprocessing/RenderPass.js",
+  "_target": "*",
+  "_originalSource": "https://raw.github.com/mrdoob/three.js/master/examples/js/postprocessing/RenderPass.js"
+}

@@ -1,0 +1,13 @@
+{
+  "name": "threejs-maskpass",
+  "_cacheHeaders": {
+    "ETag": "\"23238b086db7883a45bfc6abaac63e9170d490fd\"",
+    "Content-Length": "1622",
+    "Content-Type": "text/plain; charset=utf-8"
+  },
+  "_release": "e-tag:23238b086",
+  "main": "index.js",
+  "_source": "https://raw.github.com/mrdoob/three.js/master/examples/js/postprocessing/MaskPass.js",
+  "_target": "*",
+  "_originalSource": "https://raw.github.com/mrdoob/three.js/master/examples/js/postprocessing/MaskPass.js"
+}
