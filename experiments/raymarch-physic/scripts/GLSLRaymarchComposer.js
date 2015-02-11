@@ -10,7 +10,7 @@ export default class GLSLRaymarchComposer extends THREE.EffectComposer {
       format: THREE.RGBAFormat
     }));
 
-    this.addGLSLRaymarchShaderPass();
+    // this.addGLSLRaymarchShaderPass();
   }
 
   addGLSLRaymarchShaderPass(shader) {

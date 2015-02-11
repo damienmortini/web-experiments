@@ -20,7 +20,7 @@ gulp.task('scripts', function (callback) {
     b.transform(to5ify);
     b.bundle()
       .on('error', function(err){
-        console.log(err.message);
+        console.error(err.message);
         this.end();
       })
      .pipe(source(file))
@@ -37,7 +37,6 @@ gulp.task('serve', ['scripts'], function () {
     notify: false,
     port: 9000,
     directory: true,
-    open: false,
     server: {
       baseDir: ['./.tmp', './'],
       routes: {

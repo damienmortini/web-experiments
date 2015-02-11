@@ -2,9 +2,10 @@
 
 let THREE = window.THREE;
 
-import GLSLRaymarchComposer from './glsl-raymarch-composer';
+import GLSLRaymarchComposer from './ShaderLoader';
+import ShaderLoader from './ShaderLoader';
 
-export default class ThreejsView {
+export default class View3D {
   constructor(canvas) {
     let scene = new THREE.Scene();
     let camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
@@ -14,6 +15,8 @@ export default class ThreejsView {
     this.renderer.setSize( canvas.offsetWidth, canvas.offsetHeight );
     this.render();
     this.compose();
+
+    var shaderLoader = new ShaderLoader('../shaders/world.vert', '../shaders/world.frag');
   }
 
   compose() {
