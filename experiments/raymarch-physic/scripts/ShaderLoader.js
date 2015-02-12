@@ -1,10 +1,12 @@
 'use strict';
 
+import Shader from './Shader';
+
 let THREE = window.THREE;
 
 export default class {
-  constructor (vertexShaderurl, fragmentShaderUrl) {
-    let loadShaderFile = (url) => {
+  constructor (vertexShaderUrl, fragmentShaderUrl) {
+    let loadShaderFile = url => {
       return new Promise((resolve, reject) => {
         var xmlHttpRequest = new XMLHttpRequest();
         xmlHttpRequest.onload = () => {
@@ -14,24 +16,11 @@ export default class {
         xmlHttpRequest.send();
       });
     };
-
-    loadShaderFile(vertexShaderurl).then((data) => {
-      console.log(data);
+    Promise.all([
+      loadShaderFile(vertexShaderUrl),
+      loadShaderFile(fragmentShaderUrl)
+    ]).then(([vertexShader, fragmentShader]) => {
+      new Shader(vertexShader, fragmentShader);
     });
-    // function timeout(duration = 0) {
-    //   return new Promise((resolve, reject) => {
-    //     setTimeout(resolve, duration);
-    //   })
-    // }
-    //
-    //
-    //
-    // var p = timeout(1000).then(() => {
-    //   return timeout(2000);
-    // }).then(() => {
-    //   throw new Error("hmm");
-    // }).catch(err => {
-    //   return Promise.all([timeout(100), timeout(200)]);
-    // })
   }
 }
