@@ -4,7 +4,20 @@ let THREE = window.THREE;
 
 export default class {
   constructor (vertexShaderurl, fragmentShaderUrl) {
-    // console.log(vertexShaderurl, fragmentShaderUrl);
+    let loadShaderFile = (url) => {
+      return new Promise((resolve, reject) => {
+        var xmlHttpRequest = new XMLHttpRequest();
+        xmlHttpRequest.onload = () => {
+          resolve(xmlHttpRequest.response);
+        };
+        xmlHttpRequest.open('get', url, true);
+        xmlHttpRequest.send();
+      });
+    };
+
+    loadShaderFile(vertexShaderurl).then((data) => {
+      console.log(data);
+    });
     // function timeout(duration = 0) {
     //   return new Promise((resolve, reject) => {
     //     setTimeout(resolve, duration);
@@ -12,7 +25,7 @@ export default class {
     // }
     //
     //
-    // 
+    //
     // var p = timeout(1000).then(() => {
     //   return timeout(2000);
     // }).then(() => {
