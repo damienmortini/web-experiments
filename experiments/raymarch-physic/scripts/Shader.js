@@ -3,10 +3,12 @@
 let THREE = window.THREE;
 
 export default class {
-  constructor (vertexShader, fragmentShader) {
-    this.uniforms = {};
+  constructor (vertexShader, fragmentShader, uniforms = {}) {
+    this.uniforms = uniforms;
     this.vertexShader = vertexShader;
     this.fragmentShader = fragmentShader;
+
+
     this.parseUniforms(vertexShader + '\n' + fragmentShader);
   }
 
@@ -14,18 +16,23 @@ export default class {
     let regExp = /uniform (.[^ ]+) (.[^ ;\[\]]+)\[? *(\d+)? *\]?/g;
     let result;
     while((result = regExp.exec(str))) {
+      let name = result[2];
+      if (this.uniforms[name]) {
+        continue;
+      }
       let type;
       let value;
+      let length = result[3];
       switch (result[1]) {
         case 'int':
           type = 'i';
           value = 0;
-          // case 'int':
-          //   break;
+          // value = result[3] === undefined ? 0 : new Array(length).fill(0);
           break;
         case 'float':
           type = 'f';
           value = 0;
+          // value = result[3] === undefined ? 0 : new Array(length).fill(0);
           break;
         case 'vec2':
           type = 'v2';
@@ -59,16 +66,16 @@ export default class {
           break;
         case 'sampler2D':
           type = 't';
-          value = null;
+          value = new THREE.Texture();
           // case 'sampler2D':
           //   break;
           break;
         case 'samplerCube':
           type = 't';
-          value = null;
+          value = new THREE.CubeTexture();
           break;
       }
-      this.uniforms[result[2]] = {type, value};
+      this.uniforms[name] = {type, value};
     }
     console.log(this.uniforms);
   }
