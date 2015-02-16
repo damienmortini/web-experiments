@@ -6,7 +6,7 @@ var reload = browserSync.reload;
 var buffer = require('vinyl-buffer');
 var source = require('vinyl-source-stream');
 var browserify = require('browserify');
-var to5ify = require('6to5ify');
+var babelify = require('babelify');
 var sourcemaps = require('gulp-sourcemaps');
 
 var to5ifyFiles = [
@@ -16,18 +16,18 @@ var to5ifyFiles = [
 gulp.task('scripts', function (callback) {
   for (var i = 0; i < to5ifyFiles.length; i++) {
     var file = to5ifyFiles[i];
-    var b = browserify(file);
-    b.transform(to5ify);
+    var b = browserify([require.resolve('babelify/polyfill'), file]);
+    b.transform(babelify);
     b.bundle()
       .on('error', function(err){
         console.error(err.message);
         this.end();
       })
-     .pipe(source(file))
-     .pipe(buffer())
-     .pipe(sourcemaps.init({loadMaps: true}))
-     .pipe(sourcemaps.write('./'))
-     .pipe(gulp.dest('./.tmp'));
+      .pipe(source(file))
+      .pipe(buffer())
+      .pipe(sourcemaps.init({loadMaps: true}))
+      .pipe(sourcemaps.write('./'))
+      .pipe(gulp.dest('./.tmp'));
   }
  callback();
 });
