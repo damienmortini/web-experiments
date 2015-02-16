@@ -2,7 +2,7 @@
 
 let THREE = window.THREE;
 
-import GLSLRaymarchComposer from './ShaderLoader';
+import GLSLRaymarchComposer from './GLSLRaymarchComposer';
 import ShaderLoader from './ShaderLoader';
 
 export default class View3D {
