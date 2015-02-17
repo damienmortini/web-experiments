@@ -16,7 +16,11 @@ var to5ifyFiles = [
 gulp.task('scripts', function (callback) {
   for (var i = 0; i < to5ifyFiles.length; i++) {
     var file = to5ifyFiles[i];
-    var b = browserify([require.resolve('babelify/polyfill'), file]);
+    var b = browserify([
+      require.resolve('babelify/polyfill'),
+      './bower_components/fetch/fetch.js',
+      file]
+    );
     b.transform(babelify);
     b.bundle()
       .on('error', function(err){
