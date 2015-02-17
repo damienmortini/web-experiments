@@ -16,7 +16,11 @@ export default class View3D {
     this.render();
     this.compose();
 
-    var shaderLoader = new ShaderLoader('./shaders/world.vert', './shaders/world.frag');
+    ShaderLoader.load('./shaders/world.vert', './shaders/world.frag').then(
+      function (result) {
+        console.log(result);
+      }
+    );
   }
 
   compose() {
