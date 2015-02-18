@@ -6,6 +6,7 @@ var reload = browserSync.reload;
 var buffer = require('vinyl-buffer');
 var source = require('vinyl-source-stream');
 var browserify = require('browserify');
+var watchify = require('watchify');
 var babelify = require('babelify');
 var sourcemaps = require('gulp-sourcemaps');
 
@@ -13,16 +14,20 @@ var to5ifyFiles = [
   './experiments/raymarch-physic/scripts/main.js'
 ];
 
-gulp.task('scripts', function (callback) {
-  for (var i = 0; i < to5ifyFiles.length; i++) {
-    var file = to5ifyFiles[i];
-    var b = browserify([
-      require.resolve('babelify/polyfill'),
-      './bower_components/fetch/fetch.js',
-      file]
-    );
-    b.transform(babelify);
-    b.bundle()
+function setupBundler (file) {
+  var bundler = watchify(browserify([
+    require.resolve('babelify/polyfill'),
+    './bower_components/fetch/fetch.js',
+    file
+  ], watchify.args));
+  bundler.transform(babelify);
+  bundler.on('update', bundle);
+  bundler.on('log', function (log) {
+    console.log(log);
+    reload();
+  });
+  function bundle () {
+    return bundler.bundle()
       .on('error', function(err){
         console.error(err.message);
         this.end();
@@ -33,7 +38,36 @@ gulp.task('scripts', function (callback) {
       .pipe(sourcemaps.write('./'))
       .pipe(gulp.dest('./.tmp'));
   }
- callback();
+  bundle();
+}
+
+gulp.task('scripts', function (callback) {
+  for (var i = 0; i < to5ifyFiles.length; i++) {
+    setupBundler(to5ifyFiles[i]);
+  }
+  // for (var i = 0; i < to5ifyFiles.length; i++) {
+  //   var file = to5ifyFiles[i];
+  //
+  //   var bundler = browserify([
+  //     require.resolve('babelify/polyfill'),
+  //     './bower_components/fetch/fetch.js',
+  //     file]
+  //   );
+  //   bundler.transform(babelify);
+  //
+  //   bundler.bundle()
+  //     .on('error', function(err){
+  //       console.error(err.message);
+  //       this.end();
+  //     })
+  //     .pipe(source(file))
+  //     .pipe(buffer())
+  //     .pipe(sourcemaps.init({loadMaps: true}))
+  //     .pipe(sourcemaps.write('./'))
+  //     .pipe(gulp.dest('./.tmp'));
+  // }
+  // reload();
+  callback();
 });
 
 gulp.task('serve', ['scripts'], function () {
@@ -51,10 +85,8 @@ gulp.task('serve', ['scripts'], function () {
 
   gulp.watch([
     'experiments/**/*',
-    '!experiments/**/*.js',
-    '.tmp/**/*',
-    '!.tmp/**/*.map'
+    '!experiments/**/*.js'
   ]).on('change', reload);
 
-  gulp.watch('experiments/**/*.js', ['scripts']);
+  // gulp.watch('experiments/**/*.js', ['scripts']);
 });
