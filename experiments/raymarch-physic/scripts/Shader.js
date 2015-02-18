@@ -2,7 +2,7 @@
 
 let THREE = window.THREE;
 
-export default class {
+export default class Shader {
   constructor (vertexShader, fragmentShader, uniforms = {}, attributes = {}) {
     this.vertexShader = vertexShader;
     this.fragmentShader = fragmentShader;
@@ -13,7 +13,7 @@ export default class {
   }
 
   /**
-   * Parse shader to extract uniforms and attributes
+   * Parse shader strings to extract uniforms and attributes
    */
   parseQualifiers () {
     let str = `${this.vertexShader}\n${this.fragmentShader}`;

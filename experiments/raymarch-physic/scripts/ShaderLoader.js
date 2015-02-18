@@ -4,7 +4,7 @@ import Shader from './Shader';
 
 let THREE = window.THREE;
 
-export default class {
+export default class ShaderLoader {
   static load (vertexShaderUrl, fragmentShaderUrl) {
     return Promise.all([
       fetch(vertexShaderUrl).then((response) => response.text()),
