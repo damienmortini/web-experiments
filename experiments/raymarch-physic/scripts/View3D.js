@@ -2,32 +2,44 @@
 
 let THREE = window.THREE;
 
-import GLSLRaymarchComposer from './GLSLRaymarchComposer';
-import ShaderLoader from './ShaderLoader';
+import Scene from './Scene';
 
 export default class View3D {
   constructor(canvas) {
-    let scene = new THREE.Scene();
-    let camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+    /**
+     * Private
+     */
+    this._requestAnimationFrameId = 0;
+
+    /**
+     * Public
+     */
+    this.scene = new Scene();
     this.renderer = new THREE.WebGLRenderer({
       canvas: canvas
     });
     this.renderer.setSize( canvas.offsetWidth, canvas.offsetHeight );
-    this.render();
-    this.compose();
 
-    ShaderLoader.load('./shaders/world.vert', './shaders/world.frag').then(
-      function (result) {
-        console.log(result);
-      }
-    );
+    /**
+     * Update only if window is on focus
+     */
+    if(document.hasFocus()) {
+      this.update();
+    }
+    window.addEventListener('blur', () => {
+      this.stop();
+    });
+    window.addEventListener('focus', () => {
+      this.update();
+    });
   }
 
-  compose() {
-    new GLSLRaymarchComposer(this.renderer);
+  stop() {
+    cancelAnimationFrame(this._requestAnimationFrameId);
   }
 
-  render() {
-    requestAnimationFrame(this.render.bind(this));
+  update() {
+    this._requestAnimationFrameId = requestAnimationFrame(this.update.bind(this));
+    this.renderer.render(this.scene, this.scene.camera);
   }
 }
