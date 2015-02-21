@@ -15,7 +15,8 @@
     "fetch": "~0.7.0"
   },
   "devDependencies": {
-    "clmtrackr": "git://github.com/auduno/clmtrackr.git#dev"
+    "clmtrackr": "git://github.com/auduno/clmtrackr.git#dev",
+    "cannon.js": "~0.6.1"
   },
   "directory": "bower_components"
 }
