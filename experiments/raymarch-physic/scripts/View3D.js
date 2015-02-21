@@ -23,8 +23,9 @@ export default class View3D {
     /**
      * Update only if window is on focus
      */
-    if(document.hasFocus()) {
-      this.update();
+    this.update();
+    if(!document.hasFocus()) {
+      this.stop();
     }
     window.addEventListener('blur', () => {
       this.stop();
@@ -40,6 +41,7 @@ export default class View3D {
 
   update() {
     this._requestAnimationFrameId = requestAnimationFrame(this.update.bind(this));
+    this.scene.update();
     this.renderer.render(this.scene, this.scene.camera);
   }
 }
