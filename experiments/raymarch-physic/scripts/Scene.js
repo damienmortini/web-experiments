@@ -4,7 +4,6 @@ let THREE = window.THREE;
 let CANNON = window.CANNON;
 
 import ShaderLoader from './ShaderLoader';
-import MeshBody from './MeshBody';
 
 let TIME_STEP = 1/60;
 
@@ -18,8 +17,6 @@ export default class Scene extends THREE.Scene {
 
     this.controls = new THREE.TrackballControls(this.camera);
 
-    this.spheresMeshBody = [];
-
     /**
      * World
      */
@@ -30,32 +27,30 @@ export default class Scene extends THREE.Scene {
     /**
      * Spheres
      */
-    for (var i = 0; i < 50; i++) {
-      let sphereMesh = new THREE.Mesh(new THREE.SphereGeometry(1));
-      let sphereMeshBody = new MeshBody({
+    for (var i = 0; i < 5; i++) {
+      let sphereBody = new CANNON.Body({
         mass: 5
-      }, sphereMesh);
-      sphereMeshBody.position.set(
+      });
+      sphereBody.position.set(
         Math.random() * 10 - 5,
-        Math.random() * 100,
+        Math.random() * 10,
         Math.random() * 10 - 5
       );
-      this.world.add(sphereMeshBody);
-      this.add(sphereMesh);
-      this.spheresMeshBody.push(sphereMeshBody);
+      sphereBody.addShape(new CANNON.Sphere(1));
+      this.world.add(sphereBody);
     }
 
     /**
      * Ground
      */
-    let groundMesh = new THREE.Mesh(new THREE.CubeGeometry(20, 20, 1));
-    groundMesh.geometry.computeBoundingBox();
-    this.add(groundMesh);
-    this.groundMeshBody = new MeshBody({
+    let groundBody = new CANNON.Body({
       mass: 0
-    }, groundMesh);
-    this.groundMeshBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2);
-    this.world.add(this.groundMeshBody);
+    });
+    groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2);
+    groundBody.addShape(new CANNON.Plane());
+    this.world.add(groundBody);
+
+    this.cannonDebugRenderer = new THREE.CannonDebugRenderer( this, this.world );
 
     /**
      * Load shader
@@ -72,9 +67,6 @@ export default class Scene extends THREE.Scene {
 
     this.world.step(TIME_STEP);
 
-    for (let sphereMeshBody of this.spheresMeshBody) {
-      sphereMeshBody.update();
-    }
-    this.groundMeshBody.update();
+    this.cannonDebugRenderer.update();
   }
 }

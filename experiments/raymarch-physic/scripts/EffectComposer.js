@@ -2,7 +2,7 @@
 
 let THREE = window.THREE;
 
-export default class GLSLRaymarchComposer extends THREE.EffectComposer {
+export default class EffectComposer extends THREE.EffectComposer {
   constructor(renderer) {
     super(renderer, new THREE.WebGLRenderTarget(1, 1, {
       minFilter: THREE.LinearFilter,
