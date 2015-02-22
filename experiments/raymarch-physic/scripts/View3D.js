@@ -3,13 +3,12 @@
 let THREE = window.THREE;
 
 import Scene from './Scene';
+import EffectComposer from './EffectComposer';
 
 export default class View3D {
   constructor(canvas) {
-    /**
-     * Private
-     */
-    this._requestAnimationFrameId = 0;
+
+    this.canvas = canvas;
 
     /**
      * Public
@@ -18,7 +17,14 @@ export default class View3D {
     this.renderer = new THREE.WebGLRenderer({
       canvas: canvas
     });
-    this.renderer.setSize( canvas.offsetWidth, canvas.offsetHeight );
+    this.effectComposer = new EffectComposer(this.renderer, this.scene);
+
+    /**
+     * Private
+     */
+    this._requestAnimationFrameId = 0;
+
+    this.resize();
 
     /**
      * Update only if window is on focus
@@ -39,9 +45,23 @@ export default class View3D {
     cancelAnimationFrame(this._requestAnimationFrameId);
   }
 
+  resize() {
+    let width = this.canvas.offsetWidth;
+    let height = this.canvas.offsetHeight;
+    this.renderer.setSize( width, height );
+    this.effectComposer.setSize( width, height );
+  }
+
   update() {
     this._requestAnimationFrameId = requestAnimationFrame(this.update.bind(this));
+
     this.scene.update();
-    this.renderer.render(this.scene, this.scene.camera);
+
+    // this.renderer.render(this.scene, this.scene.camera);
+
+    this.scene.camera.updateMatrixWorld();
+    this.scene.camera.matrixWorldInverse.getInverse( this.scene.camera.matrixWorld );
+
+    this.effectComposer.render();
   }
 }

@@ -3,8 +3,6 @@
 let THREE = window.THREE;
 let CANNON = window.CANNON;
 
-import ShaderLoader from './ShaderLoader';
-
 let TIME_STEP = 1/60;
 
 export default class Scene extends THREE.Scene {
@@ -51,15 +49,6 @@ export default class Scene extends THREE.Scene {
     this.world.add(groundBody);
 
     this.cannonDebugRenderer = new THREE.CannonDebugRenderer( this, this.world );
-
-    /**
-     * Load shader
-     */
-    ShaderLoader.load('./shaders/world.vert', './shaders/world.frag').then(
-      function (result) {
-        console.log(result);
-      }
-    );
   }
 
   update() {
