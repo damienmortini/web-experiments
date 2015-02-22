@@ -28,17 +28,18 @@ function Mat3(elements){
  * @todo Create another function that immediately creates an identity matrix eg. eye()
  */
 Mat3.prototype.identity = function(){
-    this.elements[0] = 1;
-    this.elements[1] = 0;
-    this.elements[2] = 0;
+    var e = this.elements;
+    e[0] = 1;
+    e[1] = 0;
+    e[2] = 0;
 
-    this.elements[3] = 0;
-    this.elements[4] = 1;
-    this.elements[5] = 0;
+    e[3] = 0;
+    e[4] = 1;
+    e[5] = 0;
 
-    this.elements[6] = 0;
-    this.elements[7] = 0;
-    this.elements[8] = 1;
+    e[6] = 0;
+    e[7] = 0;
+    e[8] = 1;
 };
 
 /**
@@ -71,7 +72,7 @@ Mat3.prototype.setTrace = function(vec3){
 
 /**
  * Sets the matrix diagonal elements from a Vec3
- * @method setTrace
+ * @method getTrace
  */
 Mat3.prototype.getTrace = function(target){
     var target = target || new Vec3();

@@ -2,6 +2,7 @@
 module.exports = {
     version :                       require('../package.json').version,
 
+    AABB :                          require('./collision/AABB'),
     ArrayCollisionMatrix :          require('./collision/ArrayCollisionMatrix'),
     Body :                          require('./objects/Body'),
     Box :                           require('./shapes/Box'),
@@ -9,6 +10,7 @@ module.exports = {
     Constraint :                    require('./constraints/Constraint'),
     ContactEquation :               require('./equations/ContactEquation'),
     Narrowphase :                   require('./world/Narrowphase'),
+    ConeTwistConstraint :           require('./constraints/ConeTwistConstraint'),
     ContactMaterial :               require('./material/ContactMaterial'),
     ConvexPolyhedron :              require('./shapes/ConvexPolyhedron'),
     Cylinder :                      require('./shapes/Cylinder'),
@@ -20,6 +22,7 @@ module.exports = {
     GridBroadphase :                require('./collision/GridBroadphase'),
     Heightfield :                   require('./shapes/Heightfield'),
     HingeConstraint :               require('./constraints/HingeConstraint'),
+    LockConstraint :                require('./constraints/LockConstraint'),
     Mat3 :                          require('./math/Mat3'),
     Material :                      require('./material/Material'),
     NaiveBroadphase :               require('./collision/NaiveBroadphase'),
@@ -42,6 +45,7 @@ module.exports = {
     Sphere :                        require('./shapes/Sphere'),
     SplitSolver :                   require('./solver/SplitSolver'),
     Spring :                        require('./objects/Spring'),
+    Trimesh :                       require('./shapes/Trimesh'),
     Vec3 :                          require('./math/Vec3'),
     Vec3Pool :                      require('./utils/Vec3Pool'),
     World :                         require('./world/World'),

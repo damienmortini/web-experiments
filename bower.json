@@ -6,17 +6,15 @@
     "leapjs": "*",
     "stats.js": "*",
     "dat-gui": "*",
+    "clmtrackr": "git://github.com/auduno/clmtrackr.git#dev",
+    "cannon.js": "master",
     "threejs-trackballcontrols": "https://raw.github.com/mrdoob/three.js/master/examples/js/controls/TrackballControls.js",
     "threejs-effectcomposer": "https://raw.github.com/mrdoob/three.js/master/examples/js/postprocessing/EffectComposer.js",
     "threejs-renderpass": "https://raw.github.com/mrdoob/three.js/master/examples/js/postprocessing/RenderPass.js",
     "threejs-shaderpass": "https://raw.github.com/mrdoob/three.js/master/examples/js/postprocessing/ShaderPass.js",
     "threejs-fxaashader": "https://raw.github.com/mrdoob/three.js/master/examples/js/shaders/FXAAShader.js",
     "threejs-copyshader": "https://raw.github.com/mrdoob/three.js/master/examples/js/shaders/CopyShader.js",
-    "fetch": "~0.7.0"
-  },
-  "devDependencies": {
-    "clmtrackr": "git://github.com/auduno/clmtrackr.git#dev",
-    "cannon.js": "~0.6.1"
+    "fetch": "*"
   },
   "directory": "bower_components"
 }

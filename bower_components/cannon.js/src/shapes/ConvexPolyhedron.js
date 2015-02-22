@@ -24,7 +24,7 @@ var Transform = require('../math/Transform');
  * @todo Move the clipping functions to ContactGenerator?
  * @todo Automatically merge coplanar polygons in constructor.
  */
-function ConvexPolyhedron(points, faces) {
+function ConvexPolyhedron(points, faces, uniqueAxes) {
     var that = this;
     Shape.call(this);
     this.type = Shape.types.CONVEXPOLYHEDRON;
@@ -64,12 +64,19 @@ function ConvexPolyhedron(points, faces) {
      */
     this.uniqueEdges = [];
 
+    /**
+     * If given, these locally defined, normalized axes are the only ones being checked when doing separating axis check.
+     * @property {Array} uniqueAxes
+     */
+    this.uniqueAxes = uniqueAxes ? uniqueAxes.slice() : null;
+
     this.computeEdges();
     this.updateBoundingSphereRadius();
 }
 ConvexPolyhedron.prototype = new Shape();
 ConvexPolyhedron.prototype.constructor = ConvexPolyhedron;
 
+var computeEdges_tmpEdge = new Vec3();
 /**
  * Computes uniqueEdges
  * @method computeEdges
@@ -82,24 +89,17 @@ ConvexPolyhedron.prototype.computeEdges = function(){
 
     edges.length = 0;
 
-    for(var pi=0; pi<nv; pi++){
-        var p = vertices[pi];
-        if(!(p instanceof Vec3)){
-            throw "Argument 1 must be instance of Vec3";
-        }
-        this.uniqueEdges.push(p);
-    }
+    var edge = computeEdges_tmpEdge;
 
-    for(var i=0; i<faces.length; i++){
+    for(var i=0; i !== faces.length; i++){
         var face = faces[i];
         var numVertices = face.length;
-        for(var j = 0; j < numVertices; j++){
+        for(var j = 0; j !== numVertices; j++){
             var k = ( j+1 ) % numVertices;
-            var edge = new Vec3();
             vertices[face[j]].vsub(vertices[face[k]], edge);
             edge.normalize();
             var found = false;
-            for(var p=0; p < edges.length; p++){
+            for(var p=0; p !== edges.length; p++){
                 if (edges[p].almostEquals(edge) || edges[p].almostEquals(edge)){
                     found = true;
                     break;
@@ -107,17 +107,7 @@ ConvexPolyhedron.prototype.computeEdges = function(){
             }
 
             if (!found){
-                edges.push(edge);
-            }
-
-            if (edge) {
-                edge.face1 = i;
-            } else {
-                /*
-                var ed;
-                ed.m_face0 = i;
-                edges.insert(vp,ed);
-                 */
+                edges.push(edge.clone());
             }
         }
     }
@@ -204,16 +194,10 @@ ConvexPolyhedron.prototype.getFaceNormal = function(i,target){
 var cah_WorldNormal = new Vec3();
 ConvexPolyhedron.prototype.clipAgainstHull = function(posA,quatA,hullB,posB,quatB,separatingNormal,minDist,maxDist,result){
     var WorldNormal = cah_WorldNormal;
-    if(!(posA instanceof Vec3)){
-        throw new Error("posA must be Vec3");
-    }
-    if(!(quatA instanceof Quaternion)){
-        throw new Error("quatA must be Quaternion");
-    }
     var hullA = this;
     var curMaxDist = maxDist;
     var closestFaceB = -1;
-    var dmax = -Infinity;
+    var dmax = -Number.MAX_VALUE;
     for(var face=0; face < hullB.faces.length; face++){
         WorldNormal.copy(hullB.faceNormals[face]);
         quatB.vmult(WorldNormal,WorldNormal);
@@ -272,78 +256,112 @@ ConvexPolyhedron.prototype.findSeparatingAxis = function(hullB,posA,quatA,posB,q
         worldEdge1 = fsa_worldEdge1,
         Cross = fsa_Cross;
 
-    var dmin = Infinity;
+    var dmin = Number.MAX_VALUE;
     var hullA = this;
     var curPlaneTests=0;
-    var numFacesA = faceListA ? faceListA.length : hullA.faces.length;
 
-    // Test normals from hullA
-    for(var i=0; i<numFacesA; i++){
-        var fi = faceListA ? faceListA[i] : i;
-        // Get world face normal
-        faceANormalWS3.copy(hullA.faceNormals[fi]);
-        quatA.vmult(faceANormalWS3,faceANormalWS3);
-        //posA.vadd(faceANormalWS3,faceANormalWS3); // Needed?
-        //console.log("face normal:",hullA.faceNormals[fi].toString(),"world face normal:",faceANormalWS3);
-        var d = hullA.testSepAxis(faceANormalWS3, hullB, posA, quatA, posB, quatB);
-        if(d===false){
-            return false;
+    if(!hullA.uniqueAxes){
+
+        var numFacesA = faceListA ? faceListA.length : hullA.faces.length;
+
+        // Test face normals from hullA
+        for(var i=0; i<numFacesA; i++){
+            var fi = faceListA ? faceListA[i] : i;
+
+            // Get world face normal
+            faceANormalWS3.copy(hullA.faceNormals[fi]);
+            quatA.vmult(faceANormalWS3,faceANormalWS3);
+
+            var d = hullA.testSepAxis(faceANormalWS3, hullB, posA, quatA, posB, quatB);
+            if(d===false){
+                return false;
+            }
+
+            if(d<dmin){
+                dmin = d;
+                target.copy(faceANormalWS3);
+            }
         }
 
-        if(d<dmin){
-            dmin = d;
-            target.copy(faceANormalWS3);
+    } else {
+
+        // Test unique axes
+        for(var i = 0; i !== hullA.uniqueAxes.length; i++){
+
+            // Get world axis
+            quatA.vmult(hullA.uniqueAxes[i],faceANormalWS3);
+
+            var d = hullA.testSepAxis(faceANormalWS3, hullB, posA, quatA, posB, quatB);
+            if(d===false){
+                return false;
+            }
+
+            if(d<dmin){
+                dmin = d;
+                target.copy(faceANormalWS3);
+            }
         }
     }
 
-    // Test normals from hullB
-    var numFacesB = faceListB ? faceListB.length : hullB.faces.length;
-    for(var i=0;i<numFacesB;i++){
+    if(!hullB.uniqueAxes){
 
-        var fi = faceListB ? faceListB[i] : i;
+        // Test face normals from hullB
+        var numFacesB = faceListB ? faceListB.length : hullB.faces.length;
+        for(var i=0;i<numFacesB;i++){
 
-        Worldnormal1.copy(hullB.faceNormals[fi]);
-        quatB.vmult(Worldnormal1,Worldnormal1);
-        //posB.vadd(Worldnormal1,Worldnormal1);
-        //console.log("facenormal",hullB.faceNormals[fi].toString(),"world:",Worldnormal1.toString());
-        curPlaneTests++;
-        var d = hullA.testSepAxis(Worldnormal1, hullB,posA,quatA,posB,quatB);
-        if(d===false){
-            return false;
+            var fi = faceListB ? faceListB[i] : i;
+
+            Worldnormal1.copy(hullB.faceNormals[fi]);
+            quatB.vmult(Worldnormal1,Worldnormal1);
+            curPlaneTests++;
+            var d = hullA.testSepAxis(Worldnormal1, hullB,posA,quatA,posB,quatB);
+            if(d===false){
+                return false;
+            }
+
+            if(d<dmin){
+                dmin = d;
+                target.copy(Worldnormal1);
+            }
         }
+    } else {
 
-        if(d<dmin){
-            dmin = d;
-            target.copy(Worldnormal1);
+        // Test unique axes in B
+        for(var i = 0; i !== hullB.uniqueAxes.length; i++){
+            quatB.vmult(hullB.uniqueAxes[i],Worldnormal1);
+
+            curPlaneTests++;
+            var d = hullA.testSepAxis(Worldnormal1, hullB,posA,quatA,posB,quatB);
+            if(d===false){
+                return false;
+            }
+
+            if(d<dmin){
+                dmin = d;
+                target.copy(Worldnormal1);
+            }
         }
     }
 
-    var edgeAstart,edgeAend,edgeBstart,edgeBend;
-
-    var curEdgeEdge = 0;
     // Test edges
-    for(var e0=0; e0<hullA.uniqueEdges.length; e0++){
+    for(var e0=0; e0 !== hullA.uniqueEdges.length; e0++){
+
         // Get world edge
-        worldEdge0.copy(hullA.uniqueEdges[e0]);
-        quatA.vmult(worldEdge0,worldEdge0);
-        //posA.vadd(worldEdge0,worldEdge0); // needed?
+        quatA.vmult(hullA.uniqueEdges[e0],worldEdge0);
 
-        //console.log("edge0:",worldEdge0.toString());
+        for(var e1=0; e1 !== hullB.uniqueEdges.length; e1++){
 
-        for(var e1=0; e1<hullB.uniqueEdges.length; e1++){
-            worldEdge1.copy(hullB.uniqueEdges[e1]);
-            quatB.vmult(worldEdge1,worldEdge1);
-            //posB.vadd(worldEdge1,worldEdge1); // needed?
-            //console.log("edge1:",worldEdge1.toString());
+            // Get world edge 2
+            quatB.vmult(hullB.uniqueEdges[e1], worldEdge1);
             worldEdge0.cross(worldEdge1,Cross);
-            curEdgeEdge++;
+
             if(!Cross.almostZero()){
                 Cross.normalize();
-                var dist = hullA.testSepAxis( Cross, hullB, posA,quatA,posB,quatB);
-                if(dist===false){
+                var dist = hullA.testSepAxis(Cross, hullB, posA, quatA, posB, quatB);
+                if(dist === false){
                     return false;
                 }
-                if(dist<dmin){
+                if(dist < dmin){
                     dmin = dist;
                     target.copy(Cross);
                 }
@@ -355,8 +373,11 @@ ConvexPolyhedron.prototype.findSeparatingAxis = function(hullB,posA,quatA,posB,q
     if((deltaC.dot(target))>0.0){
         target.negate(target);
     }
+
     return true;
 };
+
+var maxminA=[], maxminB=[];
 
 /**
  * Test separating axis against two hulls. Both hulls are projected onto the axis and the overlap size is returned if there is one.
@@ -370,7 +391,7 @@ ConvexPolyhedron.prototype.findSeparatingAxis = function(hullB,posA,quatA,posB,q
  * @return {float} The overlap depth, or FALSE if no penetration.
  */
 ConvexPolyhedron.prototype.testSepAxis = function(axis, hullB, posA, quatA, posB, quatB){
-    var maxminA=[], maxminB=[], hullA=this;
+    var hullA=this;
     ConvexPolyhedron.project(hullA, axis, posA, quatA, maxminA);
     ConvexPolyhedron.project(hullB, axis, posB, quatB, maxminB);
     var maxA = maxminA[0];
@@ -378,7 +399,6 @@ ConvexPolyhedron.prototype.testSepAxis = function(axis, hullB, posA, quatA, posB
     var maxB = maxminB[0];
     var minB = maxminB[1];
     if(maxA<minB || maxB<minA){
-        //console.log(minA,maxA,minB,maxB);
         return false; // Separated
     }
     var d0 = maxA - minB;
@@ -440,13 +460,6 @@ var cfah_faceANormalWS = new Vec3(),
     cfah_localPlaneNormal = new Vec3(),
     cfah_planeNormalWS = new Vec3();
 ConvexPolyhedron.prototype.clipFaceAgainstHull = function(separatingNormal, posA, quatA, worldVertsB1, minDist, maxDist,result){
-    if(!(separatingNormal instanceof Vec3)){
-        throw new Error("sep normal must be vector");
-    }
-    if(!(worldVertsB1 instanceof Array)){
-        throw new Error("world verts must be array");
-    }
-
     var faceANormalWS = cfah_faceANormalWS,
         edge0 = cfah_edge0,
         WorldEdge0 = cfah_WorldEdge0,
@@ -456,15 +469,13 @@ ConvexPolyhedron.prototype.clipFaceAgainstHull = function(separatingNormal, posA
         localPlaneNormal = cfah_localPlaneNormal,
         planeNormalWS = cfah_planeNormalWS;
 
-    minDist = Number(minDist);
-    maxDist = Number(maxDist);
     var hullA = this;
     var worldVertsB2 = [];
     var pVtxIn = worldVertsB1;
     var pVtxOut = worldVertsB2;
     // Find the face with normal closest to the separating axis
     var closestFaceA = -1;
-    var dmin = Infinity;
+    var dmin = Number.MAX_VALUE;
     for(var face=0; face<hullA.faces.length; face++){
         faceANormalWS.copy(hullA.faceNormals[face]);
         quatA.vmult(faceANormalWS,faceANormalWS);
@@ -475,8 +486,8 @@ ConvexPolyhedron.prototype.clipFaceAgainstHull = function(separatingNormal, posA
             closestFaceA = face;
         }
     }
-    if (closestFaceA<0){
-        console.log("--- did not find any closest face... ---");
+    if (closestFaceA < 0){
+        // console.log("--- did not find any closest face... ---");
         return;
     }
     //console.log("closest A: ",closestFaceA);
@@ -583,15 +594,6 @@ ConvexPolyhedron.prototype.clipFaceAgainstHull = function(separatingNormal, posA
  * @param {Number} planeConstant The constant in the mathematical plane equation
  */
 ConvexPolyhedron.prototype.clipFaceAgainstPlane = function(inVertices,outVertices, planeNormal, planeConstant){
-    if(!(planeNormal instanceof Vec3)){
-        throw new Error("planeNormal must be Vec3, "+planeNormal+" given");
-    }
-    if(!(inVertices instanceof Array)) {
-        throw new Error("invertices must be Array, "+inVertices+" given");
-    }
-    if(!(outVertices instanceof Array)){
-        throw new Error("outvertices must be Array, "+outVertices+" given");
-    }
     var n_dot_first, n_dot_last;
     var numVerts = inVertices.length;
 

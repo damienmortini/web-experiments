@@ -21,7 +21,6 @@
     "commit": "115cd972a7d5dbc63bd2335a05976070e0ebc48c"
   },
   "_source": "git://github.com/github/fetch.git",
-  "_target": "~0.7.0",
-  "_originalSource": "fetch",
-  "_direct": true
+  "_target": "*",
+  "_originalSource": "fetch"
 }

@@ -1,14 +1,13 @@
 {
   "name": "cannon.js",
   "homepage": "https://github.com/schteppe/cannon.js",
-  "version": "0.6.1",
-  "_release": "0.6.1",
+  "_release": "2deba8013e",
   "_resolution": {
-    "type": "version",
-    "tag": "v0.6.1",
-    "commit": "a23be8aaa8f2fc7e2f57c1b698d3067acb64be7f"
+    "type": "branch",
+    "branch": "master",
+    "commit": "2deba8013e914f803bfc7c823d5707b84cc596a6"
   },
   "_source": "git://github.com/schteppe/cannon.js.git",
-  "_target": "~0.6.1",
-  "_originalSource": "schteppe/cannon.js"
+  "_target": "master",
+  "_originalSource": "cannon.js"
 }

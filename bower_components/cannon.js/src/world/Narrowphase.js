@@ -1,6 +1,8 @@
 module.exports = Narrowphase;
 
+var AABB = require('../collision/AABB');
 var Shape = require('../shapes/Shape');
+var Ray = require('../collision/Ray');
 var Vec3 = require('../math/Vec3');
 var Transform = require('../math/Transform');
 var ConvexPolyhedron = require('../shapes/ConvexPolyhedron');
@@ -8,6 +10,7 @@ var Quaternion = require('../math/Quaternion');
 var Solver = require('../solver/Solver');
 var Vec3Pool = require('../utils/Vec3Pool');
 var ContactEquation = require('../equations/ContactEquation');
+var FrictionEquation = require('../equations/FrictionEquation');
 
 /**
  * Helper class for the World. Generates ContactEquations.
@@ -17,7 +20,7 @@ var ContactEquation = require('../equations/ContactEquation');
  * @todo Contact reduction
  * @todo  should move methods to prototype
  */
-function Narrowphase(){
+function Narrowphase(world){
 
     /**
      * Internal storage of pooled contact points.
@@ -25,19 +28,32 @@ function Narrowphase(){
      */
     this.contactPointPool = [];
 
+    this.frictionEquationPool = [];
+
+    this.result = [];
+    this.frictionResult = [];
+
     /**
      * Pooled vectors.
      * @property {Vec3Pool} v3pool
      */
     this.v3pool = new Vec3Pool();
+
+    this.world = world;
+    this.currentContactMaterial = null;
+
+    /**
+     * @property {Boolean} enableFrictionReduction
+     */
+    this.enableFrictionReduction = false;
 }
 
 /**
  * Make a contact object, by using the internal pool or creating a new one.
- * @method makeResult
+ * @method createContactEquation
  * @return {ContactEquation}
  */
-Narrowphase.prototype.makeResult = function(bi, bj, si, sj, rsi, rsj){
+Narrowphase.prototype.createContactEquation = function(bi, bj, si, sj, rsi, rsj){
     var c;
     if(this.contactPointPool.length){
         c = this.contactPointPool.pop();
@@ -47,12 +63,133 @@ Narrowphase.prototype.makeResult = function(bi, bj, si, sj, rsi, rsj){
         c = new ContactEquation(bi, bj);
     }
 
-    c.enabled = true;
+    c.enabled = bi.collisionResponse && bj.collisionResponse && si.collisionResponse && sj.collisionResponse;
+
+    var cm = this.currentContactMaterial;
+
+    c.restitution = cm.restitution;
+
+    c.setSpookParams(
+        cm.contactEquationStiffness,
+        cm.contactEquationRelaxation,
+        this.world.dt
+    );
+
+    var matA = si.material || bi.material;
+    var matB = sj.material || bj.material;
+    if(matA && matB && matA.restitution >= 0 && matB.restitution >= 0){
+        c.restitution = matA.restitution * matB.restitution;
+    }
+
     c.si = rsi || si;
     c.sj = rsj || sj;
 
     return c;
 };
+
+Narrowphase.prototype.createFrictionEquationsFromContact = function(contactEquation, outArray){
+    var bodyA = contactEquation.bi;
+    var bodyB = contactEquation.bj;
+    var shapeA = contactEquation.si;
+    var shapeB = contactEquation.sj;
+
+    var world = this.world;
+    var cm = this.currentContactMaterial;
+
+    // If friction or restitution were specified in the material, use them
+    var friction = cm.friction;
+    var matA = shapeA.material || bodyA.material;
+    var matB = shapeB.material || bodyB.material;
+    if(matA && matB && matA.friction >= 0 && matB.friction >= 0){
+        friction = matA.friction * matB.friction;
+    }
+
+    if(friction > 0){
+
+        // Create 2 tangent equations
+        var mug = friction * world.gravity.length();
+        var reducedMass = (bodyA.invMass + bodyB.invMass);
+        if(reducedMass > 0){
+            reducedMass = 1/reducedMass;
+        }
+        var pool = this.frictionEquationPool;
+        var c1 = pool.length ? pool.pop() : new FrictionEquation(bodyA,bodyB,mug*reducedMass);
+        var c2 = pool.length ? pool.pop() : new FrictionEquation(bodyA,bodyB,mug*reducedMass);
+
+        c1.bi = c2.bi = bodyA;
+        c1.bj = c2.bj = bodyB;
+        c1.minForce = c2.minForce = -mug*reducedMass;
+        c1.maxForce = c2.maxForce = mug*reducedMass;
+
+        // Copy over the relative vectors
+        c1.ri.copy(contactEquation.ri);
+        c1.rj.copy(contactEquation.rj);
+        c2.ri.copy(contactEquation.ri);
+        c2.rj.copy(contactEquation.rj);
+
+        // Construct tangents
+        contactEquation.ni.tangents(c1.t, c2.t);
+
+        // Set spook params
+        c1.setSpookParams(cm.frictionEquationStiffness, cm.frictionEquationRelaxation, world.dt);
+        c2.setSpookParams(cm.frictionEquationStiffness, cm.frictionEquationRelaxation, world.dt);
+
+        c1.enabled = c2.enabled = contactEquation.enabled;
+
+        outArray.push(c1, c2);
+
+        return true;
+    }
+
+    return false;
+};
+
+var averageNormal = new Vec3();
+var averageContactPointA = new Vec3();
+var averageContactPointB = new Vec3();
+
+// Take the average N latest contact point on the plane.
+Narrowphase.prototype.createFrictionFromAverage = function(numContacts){
+    // The last contactEquation
+    var c = this.result[this.result.length - 1];
+
+    // Create the result: two "average" friction equations
+    if (!this.createFrictionEquationsFromContact(c, this.frictionResult) || numContacts === 1) {
+        return;
+    }
+
+    var f1 = this.frictionResult[this.frictionResult.length - 2];
+    var f2 = this.frictionResult[this.frictionResult.length - 1];
+
+    averageNormal.setZero();
+    averageContactPointA.setZero();
+    averageContactPointB.setZero();
+
+    var bodyA = c.bi;
+    var bodyB = c.bj;
+    for(var i=0; i!==numContacts; i++){
+        c = this.result[this.result.length - 1 - i];
+        if(c.bodyA !== bodyA){
+            averageNormal.vadd(c.ni, averageNormal); // vec2.add(eq.t, eq.t, c.normalA);
+            averageContactPointA.vadd(c.ri, averageContactPointA); // vec2.add(eq.contactPointA, eq.contactPointA, c.contactPointA);
+            averageContactPointB.vadd(c.rj, averageContactPointB);
+        } else {
+            averageNormal.vsub(c.ni, averageNormal); // vec2.sub(eq.t, eq.t, c.normalA);
+            averageContactPointA.vadd(c.rj, averageContactPointA); // vec2.add(eq.contactPointA, eq.contactPointA, c.contactPointA);
+            averageContactPointB.vadd(c.ri, averageContactPointB);
+        }
+    }
+
+    var invNumContacts = 1 / numContacts;
+    averageContactPointA.scale(invNumContacts, f1.ri); // vec2.scale(eq.contactPointA, eq.contactPointA, invNumContacts);
+    averageContactPointB.scale(invNumContacts, f1.rj); // vec2.scale(eq.contactPointB, eq.contactPointB, invNumContacts);
+    f2.ri.copy(f1.ri); // Should be the same
+    f2.rj.copy(f1.rj);
+    averageNormal.normalize();
+    averageNormal.tangents(f1.t, f2.t);
+    // return eq;
+};
+
 
 var tmpVec1 = new Vec3();
 var tmpVec2 = new Vec3();
@@ -68,9 +205,12 @@ var tmpQuat2 = new Quaternion();
  * @param {array} result Array to store generated contacts
  * @param {array} oldcontacts Optional. Array of reusable contact objects
  */
-Narrowphase.prototype.getContacts = function(p1,p2,world,result,oldcontacts){
+Narrowphase.prototype.getContacts = function(p1, p2, world, result, oldcontacts, frictionResult, frictionPool){
     // Save old contact objects
     this.contactPointPool = oldcontacts;
+    this.frictionEquationPool = frictionPool;
+    this.result = result;
+    this.frictionResult = frictionResult;
 
     var qi = tmpQuat1;
     var qj = tmpQuat2;
@@ -82,6 +222,12 @@ Narrowphase.prototype.getContacts = function(p1,p2,world,result,oldcontacts){
         // Get current collision bodies
         var bi = p1[k],
             bj = p2[k];
+
+        // Get contact material
+        var bodyContactMaterial = null;
+        if(bi.material && bj.material){
+            bodyContactMaterial = world.getContactMaterial(bi.material,bj.material) || null;
+        }
 
         for (var i = 0; i < bi.shapes.length; i++) {
             bi.quaternion.mult(bi.shapeOrientations[i], qi);
@@ -101,13 +247,21 @@ Narrowphase.prototype.getContacts = function(p1,p2,world,result,oldcontacts){
                     continue;
                 }
 
+                // Get collision material
+                var shapeContactMaterial = null;
+                if(si.material && sj.material){
+                    shapeContactMaterial = world.getContactMaterial(si.material,sj.material) || null;
+                }
+
+                this.currentContactMaterial = shapeContactMaterial || bodyContactMaterial || world.defaultContactMaterial;
+
                 // Get contacts
                 var resolver = this[si.type | sj.type];
                 if(resolver){
                     if (si.type < sj.type) {
-                        resolver.call(this, result, si,sj,xi,xj,qi,qj,bi,bj,si,sj);
+                        resolver.call(this, si, sj, xi, xj, qi, qj, bi, bj, si, sj);
                     } else {
-                        resolver.call(this, result, sj,si,xj,xi,qj,qi,bj,bi,si,sj);
+                        resolver.call(this, sj, si, xj, xi, qj, qi, bj, bi, si, sj);
                     }
                 }
             }
@@ -129,23 +283,26 @@ function warn(msg){
 }
 
 Narrowphase.prototype[Shape.types.BOX | Shape.types.BOX] =
-Narrowphase.prototype.boxBox = function(result,si,sj,xi,xj,qi,qj,bi,bj){
-    this.convexConvex(result,si.convexPolyhedronRepresentation,sj.convexPolyhedronRepresentation,xi,xj,qi,qj,bi,bj,si,sj);
+Narrowphase.prototype.boxBox = function(si,sj,xi,xj,qi,qj,bi,bj){
+    si.convexPolyhedronRepresentation.material = si.material;
+    sj.convexPolyhedronRepresentation.material = sj.material;
+    this.convexConvex(si.convexPolyhedronRepresentation,sj.convexPolyhedronRepresentation,xi,xj,qi,qj,bi,bj,si,sj);
 };
 
 Narrowphase.prototype[Shape.types.BOX | Shape.types.CONVEXPOLYHEDRON] =
-Narrowphase.prototype.boxConvex = function(result,si,sj,xi,xj,qi,qj,bi,bj){
-    this.convexConvex(result,si.convexPolyhedronRepresentation,sj,xi,xj,qi,qj,bi,bj,si,sj);
+Narrowphase.prototype.boxConvex = function(si,sj,xi,xj,qi,qj,bi,bj){
+    si.convexPolyhedronRepresentation.material = si.material;
+    this.convexConvex(si.convexPolyhedronRepresentation,sj,xi,xj,qi,qj,bi,bj,si,sj);
 };
 
 Narrowphase.prototype[Shape.types.BOX | Shape.types.PARTICLE] =
-Narrowphase.prototype.boxParticle = function(result,si,sj,xi,xj,qi,qj,bi,bj){
-    this.convexParticle(result,si.convexPolyhedronRepresentation,sj,xi,xj,qi,qj,bi,bj,si,sj);
+Narrowphase.prototype.boxParticle = function(si,sj,xi,xj,qi,qj,bi,bj){
+    si.convexPolyhedronRepresentation.material = si.material;
+    this.convexParticle(si.convexPolyhedronRepresentation,sj,xi,xj,qi,qj,bi,bj,si,sj);
 };
 
 /**
  * @method sphereSphere
- * @param  {Array}      result
  * @param  {Shape}      si
  * @param  {Shape}      sj
  * @param  {Vec3}       xi
@@ -156,12 +313,12 @@ Narrowphase.prototype.boxParticle = function(result,si,sj,xi,xj,qi,qj,bi,bj){
  * @param  {Body}       bj
  */
 Narrowphase.prototype[Shape.types.SPHERE] =
-Narrowphase.prototype.sphereSphere = function(result,si,sj,xi,xj,qi,qj,bi,bj){
+Narrowphase.prototype.sphereSphere = function(si,sj,xi,xj,qi,qj,bi,bj){
     // We will have only one contact in this case
-    var r = this.makeResult(bi,bj,si,sj);
+    var r = this.createContactEquation(bi,bj,si,sj);
 
     // Contact normal
-    bj.position.vsub(xi, r.ni);
+    xj.vsub(xi, r.ni);
     r.ni.normalize();
 
     // Contact point locations
@@ -169,7 +326,280 @@ Narrowphase.prototype.sphereSphere = function(result,si,sj,xi,xj,qi,qj,bi,bj){
     r.rj.copy(r.ni);
     r.ri.mult(si.radius, r.ri);
     r.rj.mult(-sj.radius, r.rj);
-    result.push(r);
+
+    r.ri.vadd(xi, r.ri);
+    r.ri.vsub(bi.position, r.ri);
+
+    r.rj.vadd(xj, r.rj);
+    r.rj.vsub(bj.position, r.rj);
+
+    this.result.push(r);
+
+    this.createFrictionEquationsFromContact(r, this.frictionResult);
+};
+
+/**
+ * @method planeTrimesh
+ * @param  {Shape}      si
+ * @param  {Shape}      sj
+ * @param  {Vec3}       xi
+ * @param  {Vec3}       xj
+ * @param  {Quaternion} qi
+ * @param  {Quaternion} qj
+ * @param  {Body}       bi
+ * @param  {Body}       bj
+ */
+var planeTrimesh_normal = new Vec3();
+var planeTrimesh_relpos = new Vec3();
+var planeTrimesh_projected = new Vec3();
+Narrowphase.prototype[Shape.types.PLANE | Shape.types.TRIMESH] =
+Narrowphase.prototype.planeTrimesh = function(
+    planeShape,
+    trimeshShape,
+    planePos,
+    trimeshPos,
+    planeQuat,
+    trimeshQuat,
+    planeBody,
+    trimeshBody
+){
+    // Make contacts!
+    var v = new Vec3();
+
+    var normal = planeTrimesh_normal;
+    normal.set(0,0,1);
+    planeQuat.vmult(normal,normal); // Turn normal according to plane
+
+    for(var i=0; i<trimeshShape.vertices.length / 3; i++){
+
+        // Get world vertex from trimesh
+        trimeshShape.getVertex(i, v);
+
+        // Safe up
+        var v2 = new Vec3();
+        v2.copy(v);
+        Transform.pointToWorldFrame(trimeshPos, trimeshQuat, v2, v);
+
+        // Check plane side
+        var relpos = planeTrimesh_relpos;
+        v.vsub(planePos, relpos);
+        var dot = normal.dot(relpos);
+
+        if(dot <= 0.0){
+            var r = this.createContactEquation(planeBody,trimeshBody,planeShape,trimeshShape);
+
+            r.ni.copy(normal); // Contact normal is the plane normal
+
+            // Get vertex position projected on plane
+            var projected = planeTrimesh_projected;
+            normal.mult(v.dot(normal), projected);
+            v.vsub(projected,projected);
+
+            // ri is the projected world position minus plane position
+            r.ri.copy(projected);
+            r.ri.vsub(planeBody.position, r.ri);
+
+            r.rj.copy(v);
+            r.rj.vsub(trimeshBody.position, r.rj);
+
+            // Store result
+            this.result.push(r);
+            this.createFrictionEquationsFromContact(r, this.frictionResult);
+        }
+    }
+};
+
+/**
+ * @method sphereTrimesh
+ * @param  {Shape}      sphereShape
+ * @param  {Shape}      trimeshShape
+ * @param  {Vec3}       spherePos
+ * @param  {Vec3}       trimeshPos
+ * @param  {Quaternion} sphereQuat
+ * @param  {Quaternion} trimeshQuat
+ * @param  {Body}       sphereBody
+ * @param  {Body}       trimeshBody
+ */
+var sphereTrimesh_normal = new Vec3();
+var sphereTrimesh_relpos = new Vec3();
+var sphereTrimesh_projected = new Vec3();
+var sphereTrimesh_v = new Vec3();
+var sphereTrimesh_v2 = new Vec3();
+var sphereTrimesh_edgeVertexA = new Vec3();
+var sphereTrimesh_edgeVertexB = new Vec3();
+var sphereTrimesh_edgeVector = new Vec3();
+var sphereTrimesh_edgeVectorUnit = new Vec3();
+var sphereTrimesh_localSpherePos = new Vec3();
+var sphereTrimesh_tmp = new Vec3();
+var sphereTrimesh_va = new Vec3();
+var sphereTrimesh_vb = new Vec3();
+var sphereTrimesh_vc = new Vec3();
+var sphereTrimesh_localSphereAABB = new AABB();
+var sphereTrimesh_triangles = [];
+Narrowphase.prototype[Shape.types.SPHERE | Shape.types.TRIMESH] =
+Narrowphase.prototype.sphereTrimesh = function (
+    sphereShape,
+    trimeshShape,
+    spherePos,
+    trimeshPos,
+    sphereQuat,
+    trimeshQuat,
+    sphereBody,
+    trimeshBody
+) {
+
+    var edgeVertexA = sphereTrimesh_edgeVertexA;
+    var edgeVertexB = sphereTrimesh_edgeVertexB;
+    var edgeVector = sphereTrimesh_edgeVector;
+    var edgeVectorUnit = sphereTrimesh_edgeVectorUnit;
+    var localSpherePos = sphereTrimesh_localSpherePos;
+    var tmp = sphereTrimesh_tmp;
+    var localSphereAABB = sphereTrimesh_localSphereAABB;
+    var v2 = sphereTrimesh_v2;
+    var relpos = sphereTrimesh_relpos;
+    var triangles = sphereTrimesh_triangles;
+
+    // Convert sphere position to local in the trimesh
+    Transform.pointToLocalFrame(trimeshPos, trimeshQuat, spherePos, localSpherePos);
+
+    // Get the aabb of the sphere locally in the trimesh
+    var sphereRadius = sphereShape.radius;
+    localSphereAABB.lowerBound.set(
+        localSpherePos.x - sphereRadius,
+        localSpherePos.y - sphereRadius,
+        localSpherePos.z - sphereRadius
+    );
+    localSphereAABB.upperBound.set(
+        localSpherePos.x + sphereRadius,
+        localSpherePos.y + sphereRadius,
+        localSpherePos.z + sphereRadius
+    );
+
+    trimeshShape.getTrianglesInAABB(localSphereAABB, triangles);
+    //for (var i = 0; i < trimeshShape.indices.length / 3; i++) triangles.push(i); // All
+
+    // Vertices
+    var v = sphereTrimesh_v;
+    var radiusSquared = sphereShape.radius * sphereShape.radius;
+    for(var i=0; i<triangles.length; i++){
+        for (var j = 0; j < 3; j++) {
+
+            trimeshShape.getVertex(trimeshShape.indices[triangles[i] * 3 + j], v);
+
+            // Check vertex overlap in sphere
+            v.vsub(localSpherePos, relpos);
+
+            if(relpos.norm2() <= radiusSquared){
+
+                // Safe up
+                v2.copy(v);
+                Transform.pointToWorldFrame(trimeshPos, trimeshQuat, v2, v);
+
+                v.vsub(spherePos, relpos);
+
+                var r = this.createContactEquation(sphereBody,trimeshBody,sphereShape,trimeshShape);
+                r.ni.copy(relpos);
+                r.ni.normalize();
+
+                // ri is the vector from sphere center to the sphere surface
+                r.ri.copy(r.ni);
+                r.ri.scale(sphereShape.radius, r.ri);
+                r.ri.vadd(spherePos, r.ri);
+                r.ri.vsub(sphereBody.position, r.ri);
+
+                r.rj.copy(v);
+                r.rj.vsub(trimeshBody.position, r.rj);
+
+                // Store result
+                this.result.push(r);
+                this.createFrictionEquationsFromContact(r, this.frictionResult);
+            }
+        }
+    }
+
+    // Check all edges
+    for(var i=0; i<triangles.length; i++){
+        for (var j = 0; j < 3; j++) {
+
+            trimeshShape.getVertex(trimeshShape.indices[triangles[i] * 3 + j], edgeVertexA);
+            trimeshShape.getVertex(trimeshShape.indices[triangles[i] * 3 + ((j+1)%3)], edgeVertexB);
+            edgeVertexB.vsub(edgeVertexA, edgeVector);
+
+            // Project sphere position to the edge
+            localSpherePos.vsub(edgeVertexB, tmp);
+            var positionAlongEdgeB = tmp.dot(edgeVector);
+
+            localSpherePos.vsub(edgeVertexA, tmp);
+            var positionAlongEdgeA = tmp.dot(edgeVector);
+
+            if(positionAlongEdgeA > 0 && positionAlongEdgeB < 0){
+
+                // Now check the orthogonal distance from edge to sphere center
+                localSpherePos.vsub(edgeVertexA, tmp);
+
+                edgeVectorUnit.copy(edgeVector);
+                edgeVectorUnit.normalize();
+                positionAlongEdgeA = tmp.dot(edgeVectorUnit);
+
+                edgeVectorUnit.scale(positionAlongEdgeA, tmp);
+                tmp.vadd(edgeVertexA, tmp);
+
+                // tmp is now the sphere center position projected to the edge, defined locally in the trimesh frame
+                var dist = tmp.distanceTo(localSpherePos);
+                if(dist < sphereShape.radius){
+                    var r = this.createContactEquation(sphereBody, trimeshBody, sphereShape, trimeshShape);
+
+                    tmp.vsub(localSpherePos, r.ni);
+                    r.ni.normalize();
+                    r.ni.scale(sphereShape.radius, r.ri);
+
+                    Transform.pointToWorldFrame(trimeshPos, trimeshQuat, tmp, tmp);
+                    tmp.vsub(trimeshBody.position, r.rj);
+
+                    Transform.vectorToWorldFrame(trimeshQuat, r.ni, r.ni);
+                    Transform.vectorToWorldFrame(trimeshQuat, r.ri, r.ri);
+
+                    this.result.push(r);
+                    this.createFrictionEquationsFromContact(r, this.frictionResult);
+                }
+            }
+        }
+    }
+
+    // Triangle faces
+    var va = sphereTrimesh_va;
+    var vb = sphereTrimesh_vb;
+    var vc = sphereTrimesh_vc;
+    var normal = sphereTrimesh_normal;
+    for(var i=0, N = triangles.length; i !== N; i++){
+        trimeshShape.getTriangleVertices(triangles[i], va, vb, vc);
+        trimeshShape.getNormal(triangles[i], normal);
+        localSpherePos.vsub(va, tmp);
+        var dist = tmp.dot(normal);
+        normal.scale(dist, tmp);
+        localSpherePos.vsub(tmp, tmp);
+
+        // tmp is now the sphere position projected to the triangle plane
+        dist = tmp.distanceTo(localSpherePos);
+        if(Ray.pointInTriangle(tmp, va, vb, vc) && dist < sphereShape.radius){
+            var r = this.createContactEquation(sphereBody, trimeshBody, sphereShape, trimeshShape);
+
+            tmp.vsub(localSpherePos, r.ni);
+            r.ni.normalize();
+            r.ni.scale(sphereShape.radius, r.ri);
+
+            Transform.pointToWorldFrame(trimeshPos, trimeshQuat, tmp, tmp);
+            tmp.vsub(trimeshBody.position, r.rj);
+
+            Transform.vectorToWorldFrame(trimeshQuat, r.ni, r.ni);
+            Transform.vectorToWorldFrame(trimeshQuat, r.ri, r.ri);
+
+            this.result.push(r);
+            this.createFrictionEquationsFromContact(r, this.frictionResult);
+        }
+    }
+
+    triangles.length = 0;
 };
 
 var point_on_plane_to_sphere = new Vec3();
@@ -177,7 +607,6 @@ var plane_to_sphere_ortho = new Vec3();
 
 /**
  * @method spherePlane
- * @param  {Array}      result
  * @param  {Shape}      si
  * @param  {Shape}      sj
  * @param  {Vec3}       xi
@@ -188,9 +617,9 @@ var plane_to_sphere_ortho = new Vec3();
  * @param  {Body}       bj
  */
 Narrowphase.prototype[Shape.types.SPHERE | Shape.types.PLANE] =
-Narrowphase.prototype.spherePlane = function(result,si,sj,xi,xj,qi,qj,bi,bj){
+Narrowphase.prototype.spherePlane = function(si,sj,xi,xj,qi,qj,bi,bj){
     // We will have one contact in this case
-    var r = this.makeResult(bi,bj,si,sj);
+    var r = this.createContactEquation(bi,bj,si,sj);
 
     // Contact normal
     r.ni.set(0,0,1);
@@ -206,8 +635,7 @@ Narrowphase.prototype.spherePlane = function(result,si,sj,xi,xj,qi,qj,bi,bj){
     r.ni.mult(r.ni.dot(point_on_plane_to_sphere), plane_to_sphere_ortho);
     point_on_plane_to_sphere.vsub(plane_to_sphere_ortho,r.rj); // The sphere position projected to plane
 
-    if(plane_to_sphere_ortho.norm2() <= si.radius * si.radius){
-        result.push(r);
+    if(-point_on_plane_to_sphere.dot(r.ni) <= si.radius){
 
         // Make it relative to the body
         var ri = r.ri;
@@ -216,6 +644,9 @@ Narrowphase.prototype.spherePlane = function(result,si,sj,xi,xj,qi,qj,bi,bj){
         ri.vsub(bi.position, ri);
         rj.vadd(xj, rj);
         rj.vsub(bj.position, rj);
+
+        this.result.push(r);
+        this.createFrictionEquationsFromContact(r, this.frictionResult);
     }
 };
 
@@ -272,7 +703,6 @@ var sphereBox_side_ns2 = new Vec3();
 
 /**
  * @method sphereBox
- * @param  {Array}      result
  * @param  {Shape}      si
  * @param  {Shape}      sj
  * @param  {Vec3}       xi
@@ -283,7 +713,7 @@ var sphereBox_side_ns2 = new Vec3();
  * @param  {Body}       bj
  */
 Narrowphase.prototype[Shape.types.SPHERE | Shape.types.BOX] =
-Narrowphase.prototype.sphereBox = function(result,si,sj,xi,xj,qi,qj,bi,bj){
+Narrowphase.prototype.sphereBox = function(si,sj,xi,xj,qi,qj,bi,bj){
     var v3pool = this.v3pool;
 
     // we refer to the box as body j
@@ -345,7 +775,7 @@ Narrowphase.prototype.sphereBox = function(result,si,sj,xi,xj,qi,qj,bi,bj){
     }
     if(side_penetrations){
         found = true;
-        var r = this.makeResult(bi,bj,si,sj);
+        var r = this.createContactEquation(bi,bj,si,sj);
         side_ns.mult(-R,r.ri); // Sphere r
         r.ni.copy(side_ns);
         r.ni.negate(r.ni); // Normal should be out of sphere
@@ -361,7 +791,8 @@ Narrowphase.prototype.sphereBox = function(result,si,sj,xi,xj,qi,qj,bi,bj){
         r.rj.vadd(xj, r.rj);
         r.rj.vsub(bj.position, r.rj);
 
-        result.push(r);
+        this.result.push(r);
+        this.createFrictionEquationsFromContact(r, this.frictionResult);
     }
 
     // Check corners
@@ -393,7 +824,7 @@ Narrowphase.prototype.sphereBox = function(result,si,sj,xi,xj,qi,qj,bi,bj){
 
                 if(sphere_to_corner.norm2() < R*R){
                     found = true;
-                    var r = this.makeResult(bi,bj,si,sj);
+                    var r = this.createContactEquation(bi,bj,si,sj);
                     r.ri.copy(sphere_to_corner);
                     r.ri.normalize();
                     r.ni.copy(r.ri);
@@ -406,7 +837,8 @@ Narrowphase.prototype.sphereBox = function(result,si,sj,xi,xj,qi,qj,bi,bj){
                     r.rj.vadd(xj, r.rj);
                     r.rj.vsub(bj.position, r.rj);
 
-                    result.push(r);
+                    this.result.push(r);
+                    this.createFrictionEquationsFromContact(r, this.frictionResult);
                 }
             }
         }
@@ -452,7 +884,7 @@ Narrowphase.prototype.sphereBox = function(result,si,sj,xi,xj,qi,qj,bi,bj){
 
                 if(tdist < sides[l].norm() && ndist<R){
                     found = true;
-                    var res = this.makeResult(bi,bj,si,sj);
+                    var res = this.createContactEquation(bi,bj,si,sj);
                     edgeCenter.vadd(orthogonal,res.rj); // box rj
                     res.rj.copy(res.rj);
                     dist.negate(res.ni);
@@ -470,7 +902,8 @@ Narrowphase.prototype.sphereBox = function(result,si,sj,xi,xj,qi,qj,bi,bj){
                     res.rj.vadd(xj, res.rj);
                     res.rj.vsub(bj.position, res.rj);
 
-                    result.push(res);
+                    this.result.push(res);
+                    this.createFrictionEquationsFromContact(res, this.frictionResult);
                 }
             }
         }
@@ -491,7 +924,6 @@ var sphereConvex_sphereToWorldPoint = new Vec3();
 
 /**
  * @method sphereConvex
- * @param  {Array}      result
  * @param  {Shape}      si
  * @param  {Shape}      sj
  * @param  {Vec3}       xi
@@ -502,7 +934,7 @@ var sphereConvex_sphereToWorldPoint = new Vec3();
  * @param  {Body}       bj
  */
 Narrowphase.prototype[Shape.types.SPHERE | Shape.types.CONVEXPOLYHEDRON] =
-Narrowphase.prototype.sphereConvex = function(result,si,sj,xi,xj,qi,qj,bi,bj){
+Narrowphase.prototype.sphereConvex = function(si,sj,xi,xj,qi,qj,bi,bj){
     var v3pool = this.v3pool;
     xi.vsub(xj,convex_to_sphere);
     var normals = sj.faceNormals;
@@ -527,7 +959,7 @@ Narrowphase.prototype.sphereConvex = function(result,si,sj,xi,xj,qi,qj,bi,bj){
         worldCorner.vsub(xi, sphere_to_corner);
         if(sphere_to_corner.norm2() < R * R){
             found = true;
-            var r = this.makeResult(bi,bj,si,sj);
+            var r = this.createContactEquation(bi,bj,si,sj);
             r.ri.copy(sphere_to_corner);
             r.ri.normalize();
             r.ni.copy(r.ri);
@@ -542,7 +974,8 @@ Narrowphase.prototype.sphereConvex = function(result,si,sj,xi,xj,qi,qj,bi,bj){
             r.rj.vadd(xj, r.rj);
             r.rj.vsub(bj.position, r.rj);
 
-            result.push(r);
+            this.result.push(r);
+            this.createFrictionEquationsFromContact(r, this.frictionResult);
             return;
         }
     }
@@ -589,7 +1022,7 @@ Narrowphase.prototype.sphereConvex = function(result,si,sj,xi,xj,qi,qj,bi,bj){
 
             if(pointInPolygon(faceVerts,worldNormal,xi)){ // Is the sphere center in the face polygon?
                 found = true;
-                var r = this.makeResult(bi,bj,si,sj);
+                var r = this.createContactEquation(bi,bj,si,sj);
 
                 worldNormal.mult(-R, r.ri); // Contact offset, from sphere center to contact
                 worldNormal.negate(r.ni); // Normal pointing out of sphere
@@ -615,7 +1048,8 @@ Narrowphase.prototype.sphereConvex = function(result,si,sj,xi,xj,qi,qj,bi,bj){
                 v3pool.release(penetrationVec2);
                 v3pool.release(penetrationSpherePoint);
 
-                result.push(r);
+                this.result.push(r);
+                this.createFrictionEquationsFromContact(r, this.frictionResult);
 
                 // Release world vertices
                 for(var j=0, Nfaceverts=faceVerts.length; j!==Nfaceverts; j++){
@@ -659,7 +1093,7 @@ Narrowphase.prototype.sphereConvex = function(result,si,sj,xi,xj,qi,qj,bi,bj){
                     // AND if p is in between v1 and v2
                     if(dot > 0 && dot*dot<edge.norm2() && xi_to_p.norm2() < R*R){ // Collision if the edge-sphere distance is less than the radius
                         // Edge contact!
-                        var r = this.makeResult(bi,bj,si,sj);
+                        var r = this.createContactEquation(bi,bj,si,sj);
                         p.vsub(xj,r.rj);
 
                         p.vsub(xi,r.ni);
@@ -675,7 +1109,8 @@ Narrowphase.prototype.sphereConvex = function(result,si,sj,xi,xj,qi,qj,bi,bj){
                         r.ri.vadd(xi, r.ri);
                         r.ri.vsub(bi.position, r.ri);
 
-                        result.push(r);
+                        this.result.push(r);
+                        this.createFrictionEquationsFromContact(r, this.frictionResult);
 
                         // Release world vertices
                         for(var j=0, Nfaceverts=faceVerts.length; j!==Nfaceverts; j++){
@@ -723,8 +1158,9 @@ var plane_to_corner = new Vec3();
  * @param  {Body}       bj
  */
 Narrowphase.prototype[Shape.types.PLANE | Shape.types.BOX] =
-Narrowphase.prototype.planeBox = function(result,si,sj,xi,xj,qi,qj,bi,bj){
-    this.planeConvex(result,si,sj.convexPolyhedronRepresentation,xi,xj,qi,qj,bi,bj);
+Narrowphase.prototype.planeBox = function(si,sj,xi,xj,qi,qj,bi,bj){
+    sj.convexPolyhedronRepresentation.material = sj.material;
+    this.planeConvex(si,sj.convexPolyhedronRepresentation,xi,xj,qi,qj,bi,bj);
 };
 
 var planeConvex_v = new Vec3();
@@ -734,7 +1170,6 @@ var planeConvex_projected = new Vec3();
 
 /**
  * @method planeConvex
- * @param  {Array}      result
  * @param  {Shape}      si
  * @param  {Shape}      sj
  * @param  {Vec3}       xi
@@ -746,7 +1181,6 @@ var planeConvex_projected = new Vec3();
  */
 Narrowphase.prototype[Shape.types.PLANE | Shape.types.CONVEXPOLYHEDRON] =
 Narrowphase.prototype.planeConvex = function(
-    result,
     planeShape,
     convexShape,
     planePosition,
@@ -762,6 +1196,7 @@ Narrowphase.prototype.planeConvex = function(
     worldNormal.set(0,0,1);
     planeQuat.vmult(worldNormal,worldNormal); // Turn normal according to plane orientation
 
+    var numContacts = 0;
     var relpos = planeConvex_relpos;
     for(var i = 0; i !== convexShape.vertices.length; i++){
 
@@ -774,7 +1209,7 @@ Narrowphase.prototype.planeConvex = function(
         var dot = worldNormal.dot(relpos);
         if(dot <= 0.0){
 
-            var r = this.makeResult(planeBody, convexBody, planeShape, convexShape);
+            var r = this.createContactEquation(planeBody, convexBody, planeShape, convexShape);
 
             // Get vertex position projected on plane
             var projected = planeConvex_projected;
@@ -793,8 +1228,16 @@ Narrowphase.prototype.planeConvex = function(
             r.rj.vadd(convexPosition, r.rj);
             r.rj.vsub(convexBody.position, r.rj);
 
-            result.push(r);
+            this.result.push(r);
+            numContacts++;
+            if(!this.enableFrictionReduction){
+                this.createFrictionEquationsFromContact(r, this.frictionResult);
+            }
         }
+    }
+
+    if(this.enableFrictionReduction && numContacts){
+        this.createFrictionFromAverage(numContacts);
     }
 };
 
@@ -803,7 +1246,6 @@ var convexConvex_q = new Vec3();
 
 /**
  * @method convexConvex
- * @param  {Array}      result
  * @param  {Shape}      si
  * @param  {Shape}      sj
  * @param  {Vec3}       xi
@@ -814,7 +1256,7 @@ var convexConvex_q = new Vec3();
  * @param  {Body}       bj
  */
 Narrowphase.prototype[Shape.types.CONVEXPOLYHEDRON] =
-Narrowphase.prototype.convexConvex = function(result,si,sj,xi,xj,qi,qj,bi,bj,rsi,rsj,faceListA,faceListB){
+Narrowphase.prototype.convexConvex = function(si,sj,xi,xj,qi,qj,bi,bj,rsi,rsj,faceListA,faceListB){
     var sepAxis = convexConvex_sepAxis;
 
     if(xi.distanceTo(xj) > si.boundingSphereRadius + sj.boundingSphereRadius){
@@ -825,8 +1267,9 @@ Narrowphase.prototype.convexConvex = function(result,si,sj,xi,xj,qi,qj,bi,bj,rsi
         var res = [];
         var q = convexConvex_q;
         si.clipAgainstHull(xi,qi,sj,xj,qj,sepAxis,-100,100,res);
+        var numContacts = 0;
         for(var j = 0; j !== res.length; j++){
-            var r = this.makeResult(bi,bj,si,sj,rsi,rsj),
+            var r = this.createContactEquation(bi,bj,si,sj,rsi,rsj),
                 ri = r.ri,
                 rj = r.rj;
             sepAxis.negate(r.ni);
@@ -845,10 +1288,98 @@ Narrowphase.prototype.convexConvex = function(result,si,sj,xi,xj,qi,qj,bi,bj,rsi
             rj.vadd(xj, rj);
             rj.vsub(bj.position, rj);
 
-            result.push(r);
+            this.result.push(r);
+            numContacts++;
+            if(!this.enableFrictionReduction){
+                this.createFrictionEquationsFromContact(r, this.frictionResult);
+            }
+        }
+        if(this.enableFrictionReduction && numContacts){
+            this.createFrictionFromAverage(numContacts);
         }
     }
 };
+
+
+/**
+ * @method convexTrimesh
+ * @param  {Array}      result
+ * @param  {Shape}      si
+ * @param  {Shape}      sj
+ * @param  {Vec3}       xi
+ * @param  {Vec3}       xj
+ * @param  {Quaternion} qi
+ * @param  {Quaternion} qj
+ * @param  {Body}       bi
+ * @param  {Body}       bj
+ */
+// Narrowphase.prototype[Shape.types.CONVEXPOLYHEDRON | Shape.types.TRIMESH] =
+// Narrowphase.prototype.convexTrimesh = function(si,sj,xi,xj,qi,qj,bi,bj,rsi,rsj,faceListA,faceListB){
+//     var sepAxis = convexConvex_sepAxis;
+
+//     if(xi.distanceTo(xj) > si.boundingSphereRadius + sj.boundingSphereRadius){
+//         return;
+//     }
+
+//     // Construct a temp hull for each triangle
+//     var hullB = new ConvexPolyhedron();
+
+//     hullB.faces = [[0,1,2]];
+//     var va = new Vec3();
+//     var vb = new Vec3();
+//     var vc = new Vec3();
+//     hullB.vertices = [
+//         va,
+//         vb,
+//         vc
+//     ];
+
+//     for (var i = 0; i < sj.indices.length / 3; i++) {
+
+//         var triangleNormal = new Vec3();
+//         sj.getNormal(i, triangleNormal);
+//         hullB.faceNormals = [triangleNormal];
+
+//         sj.getTriangleVertices(i, va, vb, vc);
+
+//         var d = si.testSepAxis(triangleNormal, hullB, xi, qi, xj, qj);
+//         if(!d){
+//             triangleNormal.scale(-1, triangleNormal);
+//             d = si.testSepAxis(triangleNormal, hullB, xi, qi, xj, qj);
+
+//             if(!d){
+//                 continue;
+//             }
+//         }
+
+//         var res = [];
+//         var q = convexConvex_q;
+//         si.clipAgainstHull(xi,qi,hullB,xj,qj,triangleNormal,-100,100,res);
+//         for(var j = 0; j !== res.length; j++){
+//             var r = this.createContactEquation(bi,bj,si,sj,rsi,rsj),
+//                 ri = r.ri,
+//                 rj = r.rj;
+//             r.ni.copy(triangleNormal);
+//             r.ni.negate(r.ni);
+//             res[j].normal.negate(q);
+//             q.mult(res[j].depth, q);
+//             res[j].point.vadd(q, ri);
+//             rj.copy(res[j].point);
+
+//             // Contact points are in world coordinates. Transform back to relative
+//             ri.vsub(xi,ri);
+//             rj.vsub(xj,rj);
+
+//             // Make relative to bodies
+//             ri.vadd(xi, ri);
+//             ri.vsub(bi.position, ri);
+//             rj.vadd(xj, rj);
+//             rj.vsub(bj.position, rj);
+
+//             result.push(r);
+//         }
+//     }
+// };
 
 var particlePlane_normal = new Vec3();
 var particlePlane_relpos = new Vec3();
@@ -867,7 +1398,7 @@ var particlePlane_projected = new Vec3();
  * @param  {Body}       bj
  */
 Narrowphase.prototype[Shape.types.PLANE | Shape.types.PARTICLE] =
-Narrowphase.prototype.planeParticle = function(result,sj,si,xj,xi,qj,qi,bj,bi){
+Narrowphase.prototype.planeParticle = function(sj,si,xj,xi,qj,qi,bj,bi){
     var normal = particlePlane_normal;
     normal.set(0,0,1);
     bj.quaternion.vmult(normal,normal); // Turn normal according to plane orientation
@@ -875,7 +1406,7 @@ Narrowphase.prototype.planeParticle = function(result,sj,si,xj,xi,qj,qi,bj,bi){
     xi.vsub(bj.position,relpos);
     var dot = normal.dot(relpos);
     if(dot <= 0.0){
-        var r = this.makeResult(bi,bj,si,sj);
+        var r = this.createContactEquation(bi,bj,si,sj);
         r.ni.copy(normal); // Contact normal is the plane normal
         r.ni.negate(r.ni);
         r.ri.set(0,0,0); // Center of particle
@@ -888,7 +1419,8 @@ Narrowphase.prototype.planeParticle = function(result,sj,si,xj,xi,qj,qi,bj,bi){
 
         // rj is now the projected world position minus plane position
         r.rj.copy(projected);
-        result.push(r);
+        this.result.push(r);
+        this.createFrictionEquationsFromContact(r, this.frictionResult);
     }
 };
 
@@ -907,7 +1439,7 @@ var particleSphere_normal = new Vec3();
  * @param  {Body}       bj
  */
 Narrowphase.prototype[Shape.types.PARTICLE | Shape.types.SPHERE] =
-Narrowphase.prototype.sphereParticle = function(result,sj,si,xj,xi,qj,qi,bj,bi){
+Narrowphase.prototype.sphereParticle = function(sj,si,xj,xi,qj,qi,bj,bi){
     // The normal is the unit vector from sphere center to particle center
     var normal = particleSphere_normal;
     normal.set(0,0,1);
@@ -915,14 +1447,15 @@ Narrowphase.prototype.sphereParticle = function(result,sj,si,xj,xi,qj,qi,bj,bi){
     var lengthSquared = normal.norm2();
 
     if(lengthSquared <= sj.radius * sj.radius){
-        var r = this.makeResult(bi,bj,si,sj);
+        var r = this.createContactEquation(bi,bj,si,sj);
         normal.normalize();
         r.rj.copy(normal);
         r.rj.mult(sj.radius,r.rj);
         r.ni.copy(normal); // Contact normal
         r.ni.negate(r.ni);
         r.ri.set(0,0,0); // Center of particle
-        result.push(r);
+        this.result.push(r);
+        this.createFrictionEquationsFromContact(r, this.frictionResult);
     }
 };
 
@@ -947,7 +1480,7 @@ var convexParticle_worldPenetrationVec = new Vec3();
  * @param  {Body}       bj
  */
 Narrowphase.prototype[Shape.types.PARTICLE | Shape.types.CONVEXPOLYHEDRON] =
-Narrowphase.prototype.convexParticle = function(result,sj,si,xj,xi,qj,qi,bj,bi){
+Narrowphase.prototype.convexParticle = function(sj,si,xj,xi,qj,qi,bj,bi){
     var penetratedFaceIndex = -1;
     var penetratedFaceNormal = convexParticle_penetratedFaceNormal;
     var worldPenetrationVec = convexParticle_worldPenetrationVec;
@@ -990,7 +1523,7 @@ Narrowphase.prototype.convexParticle = function(result,sj,si,xj,xi,qj,qi,bj,bi){
 
         if(penetratedFaceIndex!==-1){
             // Setup contact
-            var r = this.makeResult(bi,bj,si,sj);
+            var r = this.createContactEquation(bi,bj,si,sj);
             penetratedFaceNormal.mult(minPenetration, worldPenetrationVec);
 
             // rj is the particle position projected to the face
@@ -1013,7 +1546,8 @@ Narrowphase.prototype.convexParticle = function(result,sj,si,xj,xi,qj,qi,bj,bi){
             rj.vadd(xj, rj);
             rj.vsub(bj.position, rj);
 
-            result.push(r);
+            this.result.push(r);
+            this.createFrictionEquationsFromContact(r, this.frictionResult);
         } else {
             console.warn("Point found inside convex, but did not find penetrating face!");
         }
@@ -1021,8 +1555,9 @@ Narrowphase.prototype.convexParticle = function(result,sj,si,xj,xi,qj,qi,bj,bi){
 };
 
 Narrowphase.prototype[Shape.types.BOX | Shape.types.HEIGHTFIELD] =
-Narrowphase.prototype.boxHeightfield = function (result,si,sj,xi,xj,qi,qj,bi,bj){
-    this.convexHeightfield(result,si.convexPolyhedronRepresentation,sj,xi,xj,qi,qj,bi,bj);
+Narrowphase.prototype.boxHeightfield = function (si,sj,xi,xj,qi,qj,bi,bj){
+    si.convexPolyhedronRepresentation.material = si.material;
+    this.convexHeightfield(si.convexPolyhedronRepresentation,sj,xi,xj,qi,qj,bi,bj);
 };
 
 var convexHeightfield_tmp1 = new Vec3();
@@ -1030,11 +1565,10 @@ var convexHeightfield_tmp2 = new Vec3();
 var convexHeightfield_faceList = [0];
 
 /**
- * @method sphereHeightfield
+ * @method convexHeightfield
  */
 Narrowphase.prototype[Shape.types.CONVEXPOLYHEDRON | Shape.types.HEIGHTFIELD] =
 Narrowphase.prototype.convexHeightfield = function (
-    result,
     convexShape,
     hfShape,
     convexPos,
@@ -1061,7 +1595,7 @@ Narrowphase.prototype.convexHeightfield = function (
         iMaxY = Math.ceil((localConvexPos.y + radius) / w) + 1;
 
     // Bail out if we are out of the terrain
-    if(iMaxX < 0 || iMaxY < 0 || iMinX > data.length || iMaxY > data[0].length){
+    if(iMaxX < 0 || iMaxY < 0 || iMinX > data.length || iMinY > data[0].length){
         return;
     }
 
@@ -1092,21 +1626,18 @@ Narrowphase.prototype.convexHeightfield = function (
             hfShape.getConvexTrianglePillar(i, j, false);
             Transform.pointToWorldFrame(hfPos, hfQuat, hfShape.pillarOffset, worldPillarOffset);
             if (convexPos.distanceTo(worldPillarOffset) < hfShape.pillarConvex.boundingSphereRadius + convexShape.boundingSphereRadius) {
-                this.convexConvex(result, convexShape, hfShape.pillarConvex, convexPos, worldPillarOffset, convexQuat, hfQuat, convexBody, hfBody, null, null, faceList, null);
+                this.convexConvex(convexShape, hfShape.pillarConvex, convexPos, worldPillarOffset, convexQuat, hfQuat, convexBody, hfBody, null, null, faceList, null);
             }
 
             // Upper triangle
             hfShape.getConvexTrianglePillar(i, j, true);
             Transform.pointToWorldFrame(hfPos, hfQuat, hfShape.pillarOffset, worldPillarOffset);
             if (convexPos.distanceTo(worldPillarOffset) < hfShape.pillarConvex.boundingSphereRadius + convexShape.boundingSphereRadius) {
-                this.convexConvex(result, convexShape, hfShape.pillarConvex, convexPos, worldPillarOffset, convexQuat, hfQuat, convexBody, hfBody, null, null, faceList, null);
+                this.convexConvex(convexShape, hfShape.pillarConvex, convexPos, worldPillarOffset, convexQuat, hfQuat, convexBody, hfBody, null, null, faceList, null);
             }
         }
     }
 };
-
-
-
 
 var sphereHeightfield_tmp1 = new Vec3();
 var sphereHeightfield_tmp2 = new Vec3();
@@ -1116,7 +1647,6 @@ var sphereHeightfield_tmp2 = new Vec3();
  */
 Narrowphase.prototype[Shape.types.SPHERE | Shape.types.HEIGHTFIELD] =
 Narrowphase.prototype.sphereHeightfield = function (
-    result,
     sphereShape,
     hfShape,
     spherePos,
@@ -1166,6 +1696,7 @@ Narrowphase.prototype.sphereHeightfield = function (
         return;
     }
 
+    var result = this.result;
     for(var i = iMinX; i < iMaxX; i++){
         for(var j = iMinY; j < iMaxY; j++){
 
@@ -1175,14 +1706,14 @@ Narrowphase.prototype.sphereHeightfield = function (
             hfShape.getConvexTrianglePillar(i, j, false);
             Transform.pointToWorldFrame(hfPos, hfQuat, hfShape.pillarOffset, worldPillarOffset);
             if (spherePos.distanceTo(worldPillarOffset) < hfShape.pillarConvex.boundingSphereRadius + sphereShape.boundingSphereRadius) {
-                this.sphereConvex(result, sphereShape, hfShape.pillarConvex, spherePos, worldPillarOffset, sphereQuat, hfQuat, sphereBody, hfBody);
+                this.sphereConvex(sphereShape, hfShape.pillarConvex, spherePos, worldPillarOffset, sphereQuat, hfQuat, sphereBody, hfBody);
             }
 
             // Upper triangle
             hfShape.getConvexTrianglePillar(i, j, true);
             Transform.pointToWorldFrame(hfPos, hfQuat, hfShape.pillarOffset, worldPillarOffset);
             if (spherePos.distanceTo(worldPillarOffset) < hfShape.pillarConvex.boundingSphereRadius + sphereShape.boundingSphereRadius) {
-                this.sphereConvex(result, sphereShape, hfShape.pillarConvex, spherePos, worldPillarOffset, sphereQuat, hfQuat, sphereBody, hfBody);
+                this.sphereConvex(sphereShape, hfShape.pillarConvex, spherePos, worldPillarOffset, sphereQuat, hfQuat, sphereBody, hfBody);
             }
 
             var numContacts = result.length - numContactsBefore;

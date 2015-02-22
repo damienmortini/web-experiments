@@ -98,8 +98,8 @@ Heightfield.prototype.update = function(){
 };
 
 /**
- * @method updateMinValue
  * Update the .minValue property
+ * @method updateMinValue
  */
 Heightfield.prototype.updateMinValue = function(){
     var data = this.data;
@@ -175,8 +175,8 @@ Heightfield.prototype.getRectMinMax = function (iMinX, iMinY, iMaxX, iMaxY, resu
     // Get max and min of the data
     var data = this.data,
         max = this.minValue; // Set first value
-    for(var i = iMinX; i < iMaxX; i++){
-        for(var j = iMinY; j < iMaxY; j++){
+    for(var i = iMinX; i <= iMaxX; i++){
+        for(var j = iMinY; j <= iMaxY; j++){
             var height = data[i][j];
             if(height > max){
                 max = height;
@@ -228,7 +228,7 @@ Heightfield.prototype.getHeightAt = function(x, y, edgeClamp){
     var idx = [];
     this.getIndexOfPosition(x, y, idx, edgeClamp);
 
-    // TODO: do it better
+    // TODO: get upper or lower triangle, then use barycentric interpolation to get the height in the triangle.
     var minmax = [];
     this.getRectMinMax(idx[0], idx[1] + 1, idx[0], idx[1] + 1, minmax);
 

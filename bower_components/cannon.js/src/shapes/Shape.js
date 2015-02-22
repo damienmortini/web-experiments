@@ -33,6 +33,11 @@ function Shape(){
      * @property {boolean} collisionResponse
      */
     this.collisionResponse = true;
+
+    /**
+     * @property {Material} material
+     */
+    this.material = null;
 }
 Shape.prototype.constructor = Shape;
 
@@ -78,6 +83,7 @@ Shape.types = {
     CONVEXPOLYHEDRON:16,
     HEIGHTFIELD:32,
     PARTICLE:64,
-    CYLINDER:128
+    CYLINDER:128,
+    TRIMESH:256
 };
 

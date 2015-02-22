@@ -62,14 +62,18 @@ function Equation(bi,bj,minForce,maxForce){
     this.jacobianElementA = new JacobianElement();
 
     /**
-     * @property {JacobianElement} jacobianElementA
+     * @property {JacobianElement} jacobianElementB
      */
     this.jacobianElementB = new JacobianElement();
 
+    /**
+     * @property {boolean} enabled
+     * @default true
+     */
+    this.enabled = true;
+
     // Set typical spook params
     this.setSpookParams(1e7,4,1/60);
-
-    this.enabled = true;
 }
 Equation.prototype.constructor = Equation;
 

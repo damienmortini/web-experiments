@@ -20,8 +20,17 @@ var Box = require('../shapes/Box');
  * @param {Vec3} [options.angularVelocity]
  * @param {Quaternion} [options.quaternion]
  * @param {number} [options.mass]
+ * @param {Material} [options.material]
  * @param {number} [options.type]
- * @param {number} [options.linearDamping]
+ * @param {number} [options.linearDamping=0.01]
+ * @param {number} [options.angularDamping=0.01]
+ * @param {boolean} [options.allowSleep=true]
+ * @param {number} [options.sleepSpeedLimit=0.1]
+ * @param {number} [options.sleepTimeLimit=1]
+ * @param {number} [options.collisionFilterGroup=1]
+ * @param {number} [options.collisionFilterMask=1]
+ * @param {boolean} [options.fixedRotation=false]
+ * @param {Body} [options.shape]
  * @example
  *     var body = new Body({
  *         mass: 1
@@ -65,12 +74,12 @@ function Body(options){
     /**
      * @property {Number} collisionFilterGroup
      */
-    this.collisionFilterGroup = 1;
+    this.collisionFilterGroup = typeof(options.collisionFilterGroup) === 'number' ? options.collisionFilterGroup : 1;
 
     /**
      * @property {Number} collisionFilterMask
      */
-    this.collisionFilterMask = 1;
+    this.collisionFilterMask = typeof(options.collisionFilterMask) === 'number' ? options.collisionFilterMask : 1;
 
     /**
      * Whether to produce contact forces when in contact with other bodies. Note that contacts will be generated, but they will be disabled.
@@ -128,6 +137,7 @@ function Body(options){
     /**
      * @property mass
      * @type {Number}
+     * @default 0
      */
     this.mass = mass;
 
@@ -163,8 +173,9 @@ function Body(options){
      * If true, the body will automatically fall to sleep.
      * @property allowSleep
      * @type {Boolean}
+     * @default true
      */
-    this.allowSleep = true;
+    this.allowSleep = typeof(options.allowSleep) !== 'undefined' ? options.allowSleep : true;
 
     /**
      * Current sleep state.
@@ -177,15 +188,17 @@ function Body(options){
      * If the speed (the norm of the velocity) is smaller than this value, the body is considered sleepy.
      * @property sleepSpeedLimit
      * @type {Number}
+     * @default 0.1
      */
-    this.sleepSpeedLimit = 0.1;
+    this.sleepSpeedLimit = typeof(options.sleepSpeedLimit) !== 'undefined' ? options.sleepSpeedLimit : 0.1;
 
     /**
      * If the body has been sleepy for this sleepTimeLimit seconds, it is considered sleeping.
      * @property sleepTimeLimit
      * @type {Number}
+     * @default 1
      */
-    this.sleepTimeLimit = 1;
+    this.sleepTimeLimit = typeof(options.sleepTimeLimit) !== 'undefined' ? options.sleepTimeLimit : 1;
 
     this.timeLastSleepy = 0;
 
@@ -283,13 +296,14 @@ function Body(options){
     /**
      * Set to true if you don't want the body to rotate. Make sure to run .updateMassProperties() after changing this.
      * @property {Boolean} fixedRotation
+     * @default false
      */
-    this.fixedRotation = false;
+    this.fixedRotation = typeof(options.fixedRotation) !== "undefined" ? options.fixedRotation : false;
 
     /**
      * @property {Number} angularDamping
      */
-    this.angularDamping = 0.01; // Perhaps default should be zero here?
+    this.angularDamping = typeof(options.angularDamping) !== 'undefined' ? options.angularDamping : 0.01;
 
     /**
      * @property aabb
@@ -305,6 +319,10 @@ function Body(options){
     this.aabbNeedsUpdate = true;
 
     this.wlambda = new Vec3();
+
+    if(options.shape){
+        this.addShape(options.shape);
+    }
 
     this.updateMassProperties();
 }
@@ -444,6 +462,19 @@ Body.prototype.pointToLocalFrame = function(worldPoint,result){
 };
 
 /**
+ * Convert a world vector to local body frame.
+ * @method vectorToLocalFrame
+ * @param  {Vec3} worldPoint
+ * @param  {Vec3} result
+ * @return {Vec3}
+ */
+Body.prototype.vectorToLocalFrame = function(worldVector, result){
+    var result = result || new Vec3();
+    this.quaternion.conjugate().vmult(result,result);
+    return result;
+};
+
+/**
  * Convert a local body point to world frame.
  * @method pointToWorldFrame
  * @param  {Vec3} localPoint
@@ -473,7 +504,14 @@ Body.prototype.vectorToWorldFrame = function(localVector, result){
 var tmpVec = new Vec3();
 var tmpQuat = new Quaternion();
 
-
+/**
+ * Add a shape to the body with a local offset and orientation.
+ * @method addShape
+ * @param {Shape} shape
+ * @param {Vec3} offset
+ * @param {Quaternion} quaternion
+ * @return {Body} The body object, for chainability.
+ */
 Body.prototype.addShape = function(shape, _offset, _orientation){
     var offset = new Vec3();
     var orientation = new Quaternion();
@@ -492,6 +530,8 @@ Body.prototype.addShape = function(shape, _offset, _orientation){
     this.updateBoundingRadius();
 
     this.aabbNeedsUpdate = true;
+
+    return this;
 };
 
 /**
@@ -623,6 +663,29 @@ Body.prototype.applyForce = function(force,worldPoint){
 };
 
 /**
+ * Apply force to a local point in the body.
+ * @method applyLocalForce
+ * @param  {Vec3} force The force vector to apply, defined locally in the body frame.
+ * @param  {Vec3} localPoint A local point in the body to apply the force on.
+ */
+var Body_applyLocalForce_worldForce = new Vec3();
+var Body_applyLocalForce_worldPoint = new Vec3();
+Body.prototype.applyLocalForce = function(localForce, localPoint){
+    if(this.type !== Body.DYNAMIC){
+        return;
+    }
+
+    var worldForce = Body_applyLocalForce_worldForce;
+    var worldPoint = Body_applyLocalForce_worldPoint;
+
+    // Transform the force vector to world space
+    this.vectorToWorldFrame(localForce, worldForce);
+    this.pointToWorldFrame(localPoint, worldPoint);
+
+    this.applyForce(worldForce, worldPoint);
+};
+
+/**
  * Apply impulse to a world point. This could for example be a point on the Body surface. An impulse is a force added to a body during a short period of time (impulse = force * time). Impulses will be added to Body.velocity and Body.angularVelocity.
  * @method applyImpulse
  * @param  {Vec3} impulse The amount of impulse to add.
@@ -664,39 +727,49 @@ Body.prototype.applyImpulse = function(impulse, worldPoint){
 };
 
 /**
- * Should be called whenever you change the body mass.
+ * Apply locally-defined impulse to a local point in the body.
+ * @method applyLocalImpulse
+ * @param  {Vec3} force The force vector to apply, defined locally in the body frame.
+ * @param  {Vec3} localPoint A local point in the body to apply the force on.
+ */
+var Body_applyLocalImpulse_worldImpulse = new Vec3();
+var Body_applyLocalImpulse_worldPoint = new Vec3();
+Body.prototype.applyLocalImpulse = function(localImpulse, localPoint){
+    if(this.type !== Body.DYNAMIC){
+        return;
+    }
+
+    var worldImpulse = Body_applyLocalImpulse_worldImpulse;
+    var worldPoint = Body_applyLocalImpulse_worldPoint;
+
+    // Transform the force vector to world space
+    this.vectorToWorldFrame(localImpulse, worldImpulse);
+    this.pointToWorldFrame(localPoint, worldPoint);
+
+    this.applyImpulse(worldImpulse, worldPoint);
+};
+
+var Body_updateMassProperties_halfExtents = new Vec3();
+
+/**
+ * Should be called whenever you change the body shape or mass.
  * @method updateMassProperties
  */
-/*Body.prototype.updateMassProperties = function(){
-    this.invMass = this.mass>0 ? 1.0/this.mass : 0;
-    this.shape.calculateLocalInertia(this.mass, this.inertia);
-    var I = this.inertia;
-    var fixed = this.fixedRotation;
-    this.invInertia.set(
-        I.x > 0 && !fixed ? 1.0 / I.x : 0,
-        I.y > 0 && !fixed ? 1.0 / I.y : 0,
-        I.z > 0 && !fixed ? 1.0 / I.z : 0
-    );
-    this.updateInertiaWorld(true);
-};
-*/
-
 Body.prototype.updateMassProperties = function(){
-    var target = new Vec3();
-
-    // TODO: check if only 1 shape at origin, use shape inertia in that case
+    var halfExtents = Body_updateMassProperties_halfExtents;
 
     this.invMass = this.mass > 0 ? 1.0 / this.mass : 0;
     var I = this.inertia;
     var fixed = this.fixedRotation;
 
-    // Approximate with AABB
+    // Approximate with AABB box
     this.computeAABB();
-    Box.calculateInertia(new Vec3(
+    halfExtents.set(
         (this.aabb.upperBound.x-this.aabb.lowerBound.x) / 2,
         (this.aabb.upperBound.y-this.aabb.lowerBound.y) / 2,
         (this.aabb.upperBound.z-this.aabb.lowerBound.z) / 2
-    ), this.mass, I);
+    );
+    Box.calculateInertia(halfExtents, this.mass, I);
 
     this.invInertia.set(
         I.x > 0 && !fixed ? 1.0 / I.x : 0,

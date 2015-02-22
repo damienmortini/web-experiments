@@ -59,10 +59,33 @@ function Constraint(bodyA, bodyB, options){
 }
 
 /**
+ * Update all the equations with data.
  * @method update
  */
 Constraint.prototype.update = function(){
     throw new Error("method update() not implmemented in this Constraint subclass!");
+};
+
+/**
+ * Enables all equations in the constraint.
+ * @method enable
+ */
+Constraint.prototype.enable = function(){
+    var eqs = this.equations;
+    for(var i=0; i<eqs.length; i++){
+        eqs[i].enabled = true;
+    }
+};
+
+/**
+ * Disables all equations in the constraint.
+ * @method disable
+ */
+Constraint.prototype.disable = function(){
+    var eqs = this.equations;
+    for(var i=0; i<eqs.length; i++){
+        eqs[i].enabled = false;
+    }
 };
 
 Constraint.idCounter = 0;
