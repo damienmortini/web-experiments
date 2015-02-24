@@ -25,7 +25,7 @@ export default class Scene extends THREE.Scene {
     /**
      * Spheres
      */
-    for (var i = 0; i < 5; i++) {
+    for (var i = 0; i < 10; i++) {
       let sphereBody = new CANNON.Body({
         mass: 5
       });
@@ -34,7 +34,13 @@ export default class Scene extends THREE.Scene {
         Math.random() * 10,
         Math.random() * 10 - 5
       );
-      sphereBody.addShape(new CANNON.Sphere(1));
+      sphereBody.quaternion.setFromEuler (
+        Math.random() * Math.PI * 2 - Math.PI,
+        Math.random() * Math.PI * 2 - Math.PI,
+        Math.random() * Math.PI * 2 - Math.PI
+      );
+      sphereBody.addShape(new CANNON.Box(new CANNON.Vec3(1, 1, 1)));
+      // sphereBody.addShape(new CANNON.Sphere(1));
       this.world.add(sphereBody);
     }
 

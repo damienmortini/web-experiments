@@ -59,9 +59,6 @@ export default class View3D {
 
     // this.renderer.render(this.scene, this.scene.camera);
 
-    this.scene.camera.updateMatrixWorld();
-    this.scene.camera.matrixWorldInverse.getInverse( this.scene.camera.matrixWorld );
-
     this.effectComposer.render();
   }
 }
