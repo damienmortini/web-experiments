@@ -8,7 +8,7 @@ uniform float cameraFar;
 uniform float cameraFov;
 uniform mat4 cameraModelViewMatrix;
 uniform float time;
-uniform mat4 objectsMatrices[10];
+uniform mat4 objectsMatrices[40];
 
 // STRUCTURES
 
@@ -60,10 +60,10 @@ Voxel objects( vec3 p ) {
 
   Voxel voxel = Voxel( cameraFar, vec4(1.) );
 
-  for(int i = 0; i < 10; i++) {
+  for(int i = 0; i < 40; i++) {
     vec3 q = (objectsMatrices[i] * vec4(p, 1.)).xyz;
     vec4 color = vec4(1.0, 0.2, 0.5, 1.0) + vec4(normalize(-objectsMatrices[i][3].xyz), 1.);
-    // voxel = smin(Voxel(sdSphere(q, 1.), color), voxel, 1.);
+    // voxel = min(Voxel(sdSphere(q, 1.), color), voxel);
     voxel = smin(Voxel(sdBox(q, vec3(.5, .5, .5)), color), voxel, 1.);
   }
 
@@ -104,7 +104,7 @@ Voxel rayMarch( vec3 rayOrigin, vec3 rayDirection)
   float rayMarchingStep = 0.00001;
   float dist = cameraNear;
 
-  for(int i = 0; i < 64; i++) {
+  for(int i = 0; i < 32; i++) {
     if (rayMarchingStep < 0.00001 || rayMarchingStep > cameraFar) break;
     voxel = map( rayOrigin + rayDirection * dist );
     rayMarchingStep = voxel.dist;

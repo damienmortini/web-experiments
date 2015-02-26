@@ -25,14 +25,14 @@ export default class Scene extends THREE.Scene {
     /**
      * Spheres
      */
-    for (var i = 0; i < 10; i++) {
+    for (var i = 0; i < 40; i++) {
       let sphereBody = new CANNON.Body({
         mass: 5
       });
       sphereBody.position.set(
-        Math.random() * 10 - 5,
-        Math.random() * 10,
-        Math.random() * 10 - 5
+        Math.random() * 20 - 10,
+        Math.random() * 20,
+        Math.random() * 20 - 10
       );
       sphereBody.quaternion.setFromEuler (
         Math.random() * Math.PI * 2 - Math.PI,
