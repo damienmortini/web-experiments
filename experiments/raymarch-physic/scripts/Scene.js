@@ -25,7 +25,7 @@ export default class Scene extends THREE.Scene {
     /**
      * Spheres
      */
-    for (var i = 0; i < 40; i++) {
+    for (var i = 0; i < 15; i++) {
       let sphereBody = new CANNON.Body({
         mass: 5
       });

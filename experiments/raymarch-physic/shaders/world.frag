@@ -8,7 +8,8 @@ uniform float cameraFar;
 uniform float cameraFov;
 uniform mat4 cameraModelViewMatrix;
 uniform float time;
-uniform mat4 objectsMatrices[40];
+uniform mat4 objectsMatrices[15];
+uniform mat4 objectsTypes[15];
 
 // STRUCTURES
 
@@ -60,7 +61,7 @@ Voxel objects( vec3 p ) {
 
   Voxel voxel = Voxel( cameraFar, vec4(1.) );
 
-  for(int i = 0; i < 40; i++) {
+  for(int i = 0; i < 15; i++) {
     vec3 q = (objectsMatrices[i] * vec4(p, 1.)).xyz;
     vec4 color = vec4(1.0, 0.2, 0.5, 1.0) + vec4(normalize(-objectsMatrices[i][3].xyz), 1.);
     // voxel = min(Voxel(sdSphere(q, 1.), color), voxel);

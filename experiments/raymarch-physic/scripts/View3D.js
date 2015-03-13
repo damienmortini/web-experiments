@@ -46,8 +46,8 @@ export default class View3D {
   }
 
   resize() {
-    let width = this.canvas.offsetWidth * .25;
-    let height = this.canvas.offsetHeight * .25;
+    let width = this.canvas.offsetWidth * .5;
+    let height = this.canvas.offsetHeight * .5;
     this.renderer.setSize( width, height, false );
     this.effectComposer.setSize( width, height );
   }
@@ -57,7 +57,7 @@ export default class View3D {
 
     this.scene.update();
 
-    this.renderer.render(this.scene, this.scene.camera);
+    // this.renderer.render(this.scene, this.scene.camera);
 
     this.effectComposer.render();
   }

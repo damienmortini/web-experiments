@@ -10,7 +10,7 @@ var watchify = require('watchify');
 var babelify = require('babelify');
 var sourcemaps = require('gulp-sourcemaps');
 
-var to5ifyFiles = [
+var es6Files = [
   './experiments/raymarch-physic/scripts/main.js'
 ];
 
@@ -42,11 +42,11 @@ function setupBundler (file) {
 }
 
 gulp.task('scripts', function (callback) {
-  for (var i = 0; i < to5ifyFiles.length; i++) {
-    setupBundler(to5ifyFiles[i]);
+  for (var i = 0; i < es6Files.length; i++) {
+    setupBundler(es6Files[i]);
   }
-  // for (var i = 0; i < to5ifyFiles.length; i++) {
-  //   var file = to5ifyFiles[i];
+  // for (var i = 0; i < es6Files.length; i++) {
+  //   var file = es6Files[i];
   //
   //   var bundler = browserify([
   //     require.resolve('babelify/polyfill'),
@@ -73,7 +73,6 @@ gulp.task('scripts', function (callback) {
 gulp.task('serve', ['scripts'], function () {
   browserSync({
     notify: false,
-    port: 9000,
     directory: true,
     server: {
       baseDir: ['./.tmp', './'],
