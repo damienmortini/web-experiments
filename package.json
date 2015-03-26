@@ -1,15 +1,21 @@
 {
   "name": "web-experiments",
-  "version": "0.0.0",
-  "dependencies": {},
+  "description": "Some experiments on the Web",
   "devDependencies": {
-    "babelify": "*",
-    "browser-sync": "*",
-    "browserify": "*",
-    "gulp": "*",
-    "gulp-sourcemaps": "*",
-    "vinyl-buffer": "*",
-    "vinyl-source-stream": "*",
-    "watchify": "*"
-  }
+    "auto-reload-brunch": "^1.7.8",
+    "babel-brunch": "^4.0.0",
+    "brunch": "^1.7.20",
+    "css-brunch": "^1.7.0",
+    "javascript-brunch": "^1.7.1"
+  },
+  "scripts": {
+    "watch": "brunch watch --server",
+    "build": "brunch build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://dmmn@github.com/dmmn/web-experiments.git"
+  },
+  "author": "Damien Mortini",
+  "homepage": "https://github.com/dmmn/web-experiments"
 }
