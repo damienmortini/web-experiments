@@ -11,5 +11,9 @@
     "bower_components",
     "test",
     "tests"
-  ]
+  ],
+  "dependencies": {
+    "dat-gui": "~0.5.1",
+    "threejs": "*"
+  }
 }

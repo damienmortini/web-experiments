@@ -18,7 +18,7 @@
 		</style>
 	</head>
 	<body>
-		<script type="text/javascript" src="../../bower_components/threejs/build/three.js"></script>
+		<script type="text/javascript" src="../scripts/vendor.js"></script>
 		<script id="vertexShader" type="x-shader/x-vertex">
 			uniform float time;
 			uniform vec2 mouse;
@@ -48,7 +48,7 @@
 				//mvPosition.x += normal.x * d;
 				//mvPosition.y += normal.y * d;
 				gl_Position = projectionMatrix * newPosition;
-			} 
+			}
 
 			//effet cubique cool
 			// newPosition.xyz += 30.0 * cos(time*0.5+newPosition.xyz/25.0);
@@ -102,7 +102,7 @@
 				  mouse : { type: "v2", value: new THREE.Vector2(mouseX, -mouseY) },
 				  size : { type: "v2", value: new THREE.Vector2(100,100) }
 				};
-			   
+
 				material = new THREE.ShaderMaterial({
 					uniforms: uniforms,
 					vertexShader: vertexShader,
