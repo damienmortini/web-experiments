@@ -15,14 +15,20 @@ exports.config = {
   conventions: {
     assets: function (path) {
       return /^app/.test(path) && !/scripts|styles/.test(path);
-    }
+    },
+    vendor: /(^bower_components|node_modules|vendor)[\\/]/
   },
   files: {
     javascripts: {
       joinTo: Object.defineProperties({
-        'scripts/vendor.js': [
+        'scripts/vendors/cannon.js': 'bower_components/cannon.js/**/*',
+        'scripts/vendors/three.js': [
+          'bower_components/threejs/**/*',
+          'bower_components/THREE.*/**/*'
+        ],
+        'scripts/vendors/common.js': [
           'node_modules/babel-brunch/node_modules/babel-core/browser-polyfill.js',
-          /^bower_components/
+          /^bower_components[\\/](?!cannon|three)/i
         ],
         'scripts/main.js': /^app[\\/]scripts/
       },
