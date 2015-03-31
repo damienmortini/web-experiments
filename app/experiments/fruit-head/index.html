@@ -64,8 +64,7 @@
 	<div class="embed"></div>
 	<canvas class="main-canvas"></canvas>
 	<canvas width="640" height="480" class="tracker-canvas"></canvas>
-	<script src="../../bower_components/clmtrackr/clmtrackr.js"></script>
-	<script src="../../bower_components/clmtrackr/models/model_pca_20_svm.js"></script>
+	<script src="../../scripts/vendors/clmtrackr.js"></script>
 	<script>
 	(function() {
 		'use strict';
@@ -119,6 +118,10 @@
 
 			var positions = this.ctracker.getCurrentPosition();
 
+			if(!positions) {
+				return;
+			}
+
 			this.mouthRect.x = positions[44][0];
 			this.mouthRect.y = positions[46][1];
 			this.mouthRect.width = positions[50][0] - this.mouthRect.x;
@@ -140,7 +143,7 @@
 			this.ctx.drawImage(this.video, this.leftEyeRect.x - ENLARGE, this.leftEyeRect.y - ENLARGE, this.leftEyeRect.width + ENLARGE * 2, this.leftEyeRect.height + ENLARGE * 2, 60, 40, 200, 200);
 			this.ctx.drawImage(this.video, this.rightEyeRect.x - ENLARGE, this.rightEyeRect.y - ENLARGE, this.rightEyeRect.width + ENLARGE * 2, this.rightEyeRect.height + ENLARGE * 2, 360, 40, 200, 200);
 			this.ctx.restore();
-			
+
 			// this.ctx.globalCompositeOperation = 'multiply';
 			// this.ctx.fillStyle = 'red';
 			// this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
