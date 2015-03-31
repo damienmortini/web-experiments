@@ -6,7 +6,8 @@
     "babel-brunch": "^4.0.0",
     "brunch": "^1.7.20",
     "css-brunch": "^1.7.0",
-    "javascript-brunch": "^1.7.1"
+    "javascript-brunch": "^1.7.1",
+    "uglify-js-brunch": "^1.7.7"
   },
   "scripts": {
     "watch": "brunch watch --server",
