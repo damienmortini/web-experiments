@@ -21,13 +21,14 @@ exports.config = {
   files: {
     javascripts: {
       joinTo: Object.defineProperties({
-        'scripts/vendors/cannon.js': 'bower_components/cannon.js/**/*',
-        'scripts/vendors/clmtrackr.js': 'bower_components/clmtrackr/**/*',
-        'scripts/vendors/three.js': [
+        'vendors/cannon.js': 'bower_components/cannon.js/**/*',
+        'vendors/clmtrackr.js': 'bower_components/clmtrackr/**/*',
+        'vendors/leap.js': 'bower_components/leapjs/**/*',
+        'vendors/three.js': [
           'bower_components/threejs/**/*',
           'bower_components/THREE.*/**/*'
         ],
-        'scripts/vendors/common.js': [
+        'vendors/common.js': [
           'node_modules/babel-brunch/node_modules/babel-core/browser-polyfill.js',
           /^bower_components[\\/](?!cannon|three)/i
         ],
@@ -54,7 +55,6 @@ exports.config = {
     }
   },
   onCompile: function() {
-    require('fs').appendFile('public/scripts/vendor.js', '\n\nrequire(\'node_modules/babel-brunch/node_modules/babel-core/browser-polyfill\');');
     require('fs').appendFile('public/scripts/main.js', '\n\nrequire(\'scripts/main\');');
     for (var i = 0; i < es6Experiments.length; i++) {
       var experimentName = es6Experiments[i];

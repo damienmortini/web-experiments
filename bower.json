@@ -24,7 +24,8 @@
     "THREE.CopyShader": "https://raw.github.com/mrdoob/three.js/master/examples/js/shaders/CopyShader.js",
     "fetch": "~0.7.0",
     "cannon.js": "schteppe/cannon.js#~0.6.2",
-    "clmtrackr": "*"
+    "clmtrackr": "*",
+    "leapjs": "~0.6.2"
   },
   "overrides": {
     "cannon.js": {
