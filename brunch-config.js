@@ -1,3 +1,10 @@
+'use strict';
+
+var es6Experiments = [
+  'raymarch-physic',
+  'substrate'
+];
+
 exports.config = {
   paths: {
     watched: [
@@ -12,14 +19,25 @@ exports.config = {
   },
   files: {
     javascripts: {
-      joinTo: {
+      joinTo: Object.defineProperties({
         'scripts/vendor.js': [
           'node_modules/babel-brunch/node_modules/babel-core/browser-polyfill.js',
           /^bower_components/
         ],
-        'scripts/main.js': /^app[\\/]scripts/,
-        'experiments/raymarch-physic/scripts/main.js': /^app[\\/]experiments[\\/]raymarch-physic[\\/]scripts/
+        'scripts/main.js': /^app[\\/]scripts/
       },
+      (function() {
+        var obj = {};
+        for (var i = 0; i < es6Experiments.length; i++) {
+          var experimentName = es6Experiments[i];
+          obj['experiments/' + experimentName + '/scripts/main.js'] = {
+            value:'app/experiments/' + experimentName + '/scripts/**/*.js',
+            enumerable: true
+          };
+        }
+        return obj;
+      })()
+      ),
       order: {
         before: ['bower_components/threejs/build/three.js']
       }
@@ -29,9 +47,11 @@ exports.config = {
     }
   },
   onCompile: function() {
-    'use strict';
     require('fs').appendFile('public/scripts/vendor.js', '\n\nrequire(\'node_modules/babel-brunch/node_modules/babel-core/browser-polyfill\');');
     require('fs').appendFile('public/scripts/main.js', '\n\nrequire(\'scripts/main\');');
-    require('fs').appendFile('public/experiments/raymarch-physic/scripts/main.js', '\n\nrequire(\'experiments/raymarch-physic/scripts/main\');');
+    for (var i = 0; i < es6Experiments.length; i++) {
+      var experimentName = es6Experiments[i];
+      require('fs').appendFile('public/experiments/' + experimentName + '/scripts/main.js', '\n\nrequire(\'experiments/' + experimentName + '/scripts/main\');');
+    }
   }
 };
