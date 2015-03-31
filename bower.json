@@ -23,13 +23,20 @@
     "THREE.FXAAShader": "https://raw.github.com/mrdoob/three.js/master/examples/js/shaders/FXAAShader.js",
     "THREE.CopyShader": "https://raw.github.com/mrdoob/three.js/master/examples/js/shaders/CopyShader.js",
     "fetch": "~0.7.0",
-    "cannon.js": "schteppe/cannon.js#~0.6.2"
+    "cannon.js": "schteppe/cannon.js#~0.6.2",
+    "clmtrackr": "*"
   },
   "overrides": {
     "cannon.js": {
       "main": [
         "build/cannon.js",
         "tools/threejs/CannonDebugRenderer.js"
+      ]
+    },
+    "clmtrackr": {
+      "main": [
+        "clmtrackr.js",
+        "models/model_pca_20_svm.js"
       ]
     }
   }

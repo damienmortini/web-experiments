@@ -22,6 +22,7 @@ exports.config = {
     javascripts: {
       joinTo: Object.defineProperties({
         'scripts/vendors/cannon.js': 'bower_components/cannon.js/**/*',
+        'scripts/vendors/clmtrackr.js': 'bower_components/clmtrackr/**/*',
         'scripts/vendors/three.js': [
           'bower_components/threejs/**/*',
           'bower_components/THREE.*/**/*'
