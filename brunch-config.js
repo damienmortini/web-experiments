@@ -21,18 +21,19 @@ exports.config = {
   files: {
     javascripts: {
       joinTo: Object.defineProperties({
+        'vendors/common.js': [
+          'node_modules/babel-brunch/node_modules/babel-core/browser-polyfill.js',
+          'bower_components/fetch/**/*',
+          'bower_components/dat-gui/**/*'
+        ],
+        'scripts/main.js': /^app[\\/]scripts/,
         'vendors/cannon.js': 'bower_components/cannon.js/**/*',
         'vendors/clmtrackr.js': 'bower_components/clmtrackr/**/*',
         'vendors/leap.js': 'bower_components/leapjs/**/*',
         'vendors/three.js': [
           'bower_components/threejs/**/*',
           'bower_components/THREE.*/**/*'
-        ],
-        'vendors/common.js': [
-          'node_modules/babel-brunch/node_modules/babel-core/browser-polyfill.js',
-          /^bower_components[\\/](?!cannon|three)/i
-        ],
-        'scripts/main.js': /^app[\\/]scripts/
+        ]
       },
       (function() {
         var obj = {};

@@ -13,14 +13,14 @@ THREE.EffectComposer.prototype.constructor = THREE.EffectComposer;
 export default class EffectComposer extends THREE.EffectComposer {
   constructor(renderer, scene) {
 
-    this.scene = scene;
-    this.objects3D = [];
-
     super(renderer, new THREE.WebGLRenderTarget(1, 1, {
       minFilter: THREE.LinearFilter,
       magFilter: THREE.LinearFilter,
       format: THREE.RGBAFormat
     }));
+
+    this.scene = scene;
+    this.objects3D = [];
 
     /**
      * Load shader

@@ -1,16 +1,17 @@
 {
   "name": "web-experiments",
   "description": "Some experiments on the Web",
-  "devDependencies": {
+  "dependencies": {
     "auto-reload-brunch": "^1.7.8",
-    "babel-brunch": "^4.0.0",
-    "brunch": "^1.7.20",
+    "babel-brunch": "^5.0.0",
+    "brunch": "^1.7.0",
     "css-brunch": "^1.7.0",
     "javascript-brunch": "^1.7.1",
-    "uglify-js-brunch": "^1.7.7"
+    "uglify-js-brunch": "^1.7.8"
   },
   "scripts": {
-    "watch": "brunch watch --server",
+    "serve": "brunch watch --server",
+    "watch": "brunch watch",
     "build": "brunch build"
   },
   "repository": {
