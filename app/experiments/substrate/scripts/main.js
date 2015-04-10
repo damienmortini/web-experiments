@@ -1,6 +1,6 @@
 'use strict';
 
-import BoidSystem from './BoidSystem';
+import BoidSystem from 'dmmn/substrate/BoidSystem';
 
 class Main {
   constructor() {

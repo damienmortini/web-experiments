@@ -2,7 +2,8 @@
 
 var es6Experiments = [
   'raymarch-physic',
-  'substrate'
+  'substrate',
+  'crystal-city'
 ];
 
 exports.config = {
@@ -14,7 +15,7 @@ exports.config = {
   },
   conventions: {
     assets: function (path) {
-      return /^app/.test(path) && !/scripts|styles/.test(path);
+      return /^app/.test(path) && !/\.(js|css|scss)/.test(path);
     },
     vendor: /(^bower_components|node_modules|vendor)[\\/]/
   },
@@ -24,9 +25,10 @@ exports.config = {
         'vendors/common.js': [
           'node_modules/babel-brunch/node_modules/babel-core/browser-polyfill.js',
           'bower_components/fetch/**/*',
-          'bower_components/dat-gui/**/*'
+          'app/dmmn/**/*'
         ],
         'scripts/main.js': /^app[\\/]scripts/,
+        'vendors/dat-gui.js': 'bower_components/dat-gui/**/*',
         'vendors/cannon.js': 'bower_components/cannon.js/**/*',
         'vendors/clmtrackr.js': 'bower_components/clmtrackr/**/*',
         'vendors/leap.js': 'bower_components/leapjs/**/*',
