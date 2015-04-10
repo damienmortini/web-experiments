@@ -1,7 +1,7 @@
 'use strict';
 
 export default class Boid {
-  constructor(context, x, y, angle, velocityAngle, life = 40) {
+  constructor(context, x, y, angle, velocityAngle, life = -1) {
     this.context = context;
     this.baseLife = life;
     this.reset(x, y, angle);
@@ -36,10 +36,10 @@ export default class Boid {
     this.previousX = this.x;
     this.previousY = this.y;
     this.angle += this.velocityAngle;
-    this.x += Math.cos(this.angle) * 2;
-    this.y += Math.sin(this.angle) * 2;
+    this.x += Math.cos(this.angle) * this.context.lineWidth * 2;
+    this.y += Math.sin(this.angle) * this.context.lineWidth * 2;
     this.life--;
-    if(this.life < 0) {
+    if(this.life === 0) {
       this.kill();
     }
     return this;

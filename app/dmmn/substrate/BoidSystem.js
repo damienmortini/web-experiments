@@ -13,8 +13,6 @@ export default class BoidSystem {
     this.width = this.canvas.width;
     this.height = this.canvas.height;
 
-    console.log(this.width, this.height);
-
     for (var i = 0; i < 1000; i++) {
       let boid = new Boid(this.context, this.canvas.width * 0.5, this.canvas.height * 0.5);
       boid.isDead = true;

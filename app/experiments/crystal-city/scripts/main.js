@@ -1,19 +1,10 @@
 'use strict';
 
-// import BoidSystem from '../../substrate/scripts/BoidSystem';
-import GLSLView from './GLSLView';
+import BoidSystem from 'dmmn/substrate/BoidSystem';
+import View from './View';
 
 class Main {
   constructor() {
-
-    this.canvas = document.querySelector('canvas');
-
-    this.canvas.width = this.canvas.offsetWidth;
-    this.canvas.height = this.canvas.offsetHeight;
-
-    let glslView = new GLSLView(this.canvas);
-
-    // this.boidSystem = new BoidSystem(this.canvas);
 
     this.pointer = {
       x: 0,
@@ -21,11 +12,31 @@ class Main {
       down: false
     };
 
+    this.substrateCanvas = document.querySelector('canvas#substrate');
+    this.substrateCanvas.width = 512;
+    this.substrateCanvas.height = 512;
+    this.boidSystem = new BoidSystem(this.substrateCanvas);
+    // let times = 100;
+    // for (var i = 0; i < times; i++) {
+    //   this.boidSystem.context.fillStyle = `rgba(0, 0, 0, ${(1 - i / times)})`;
+    //   this.boidSystem.context.fillRect(-i + 128, -i + 128, 256, 256);
+    // }
+    this.boidSystem.context.lineWidth = 4;
+    this.boidSystem.add(this.substrateCanvas.width * .5, this.substrateCanvas.height * .5);
+
+    this.canvas = document.querySelector('canvas#main');
+    this.canvas.width = this.canvas.offsetWidth;
+    this.canvas.height = this.canvas.offsetHeight;
+
+    fetch('shaders/world.glsl').then((response) => response.text()).then((data) => {
+      this.view = new View(this.canvas, data, this.substrateCanvas);
+      this.update();
+    });
+
     // this.canvas.addEventListener('mousedown', this.onCanvasPointerDown.bind(this));
     // this.canvas.addEventListener('mousemove', this.onCanvasPointerMove.bind(this));
     // this.canvas.addEventListener('mouseup', this.onCanvasPointerUp.bind(this));
 
-    // this.update();
   }
   onCanvasPointerDown () {
     this.pointer.down = true;
@@ -37,16 +48,19 @@ class Main {
   onCanvasPointerUp () {
     this.pointer.down = false;
   }
-  // update () {
-  //   requestAnimationFrame(this.update.bind(this));
+  update () {
+    requestAnimationFrame(this.update.bind(this));
   //   // if(this.pointer.down) {
   //   if(this.pointer.x + this.pointer.y !== 0 ) {
   //     this.boidSystem.add(this.pointer.x, this.pointer.y);
   //     this.boidSystem.add(this.pointer.x, this.pointer.y);
   //     this.boidSystem.add(this.pointer.x, this.pointer.y);
   //   }
-  //   this.boidSystem.update();
-  // }
+    this.boidSystem.update();
+
+    this.view.update();
+    return;
+  }
 }
 
 new Main();

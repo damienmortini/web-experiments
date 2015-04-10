@@ -46,8 +46,8 @@ export default class View3D {
   }
 
   resize() {
-    let width = this.canvas.offsetWidth * .5;
-    let height = this.canvas.offsetHeight * .5;
+    let width = this.canvas.offsetWidth * .2;
+    let height = this.canvas.offsetHeight * .2;
     this.renderer.setSize( width, height, false );
     this.effectComposer.setSize( width, height );
   }

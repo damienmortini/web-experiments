@@ -102,11 +102,11 @@ Voxel rayMarch( vec3 rayOrigin, vec3 rayDirection)
 {
   Voxel voxel = Voxel(cameraFar, vec4(0.0));
 
-  float rayMarchingStep = 0.00001;
+  float rayMarchingStep = 0.0001;
   float dist = cameraNear;
 
   for(int i = 0; i < 32; i++) {
-    if (rayMarchingStep < 0.00001 || rayMarchingStep > cameraFar) break;
+    if (rayMarchingStep < 0.0001 || rayMarchingStep > cameraFar) break;
     voxel = map( rayOrigin + rayDirection * dist );
     rayMarchingStep = voxel.dist;
     dist += rayMarchingStep;

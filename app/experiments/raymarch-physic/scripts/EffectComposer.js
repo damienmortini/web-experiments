@@ -1,6 +1,6 @@
 'use strict';
 
-import Shader from './Shader';
+import Shader from 'dmmn/threejs/Shader';
 
 let THREE = window.THREE;
 let fetch = window.fetch;
