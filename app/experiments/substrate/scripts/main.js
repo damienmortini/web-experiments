@@ -5,12 +5,17 @@ import BoidSystem from 'dmmn/substrate/BoidSystem';
 class Main {
   constructor() {
 
-    this.canvas = document.querySelector('canvas');
+    let canvas = document.querySelector('canvas#main');
 
-    this.canvas.width = this.canvas.offsetWidth;
-    this.canvas.height = this.canvas.offsetHeight;
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
 
-    this.boidSystem = new BoidSystem(this.canvas);
+    let normalsCanvas = document.querySelector('canvas#normals');
+
+    this.boidSystem = new BoidSystem({
+      canvas,
+      normalsCanvas
+    });
 
     this.pointer = {
       x: 0,
@@ -18,11 +23,13 @@ class Main {
       down: false
     };
 
-    // this.canvas.addEventListener('mousedown', this.onCanvasPointerDown.bind(this));
-    this.canvas.addEventListener('mousemove', this.onCanvasPointerMove.bind(this));
-    // this.canvas.addEventListener('mouseup', this.onCanvasPointerUp.bind(this));
+    canvas.addEventListener('mousedown', this.onCanvasPointerDown.bind(this));
+    canvas.addEventListener('mousemove', this.onCanvasPointerMove.bind(this));
+    canvas.addEventListener('mouseup', this.onCanvasPointerUp.bind(this));
 
     this.update();
+
+    this.boidSystem.add({x: canvas.width * .5, y: canvas.height * .5});
   }
   onCanvasPointerDown () {
     this.pointer.down = true;
@@ -36,11 +43,8 @@ class Main {
   }
   update () {
     requestAnimationFrame(this.update.bind(this));
-    // if(this.pointer.down) {
-    if(this.pointer.x + this.pointer.y !== 0 ) {
-      this.boidSystem.add(this.pointer.x, this.pointer.y);
-      this.boidSystem.add(this.pointer.x, this.pointer.y);
-      this.boidSystem.add(this.pointer.x, this.pointer.y);
+    if(this.pointer.down) {
+      this.boidSystem.add({x: this.pointer.x, y: this.pointer.y});
     }
     this.boidSystem.update();
   }
