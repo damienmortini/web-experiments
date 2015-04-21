@@ -1,15 +1,24 @@
 'use strict';
 
 export default class Boid {
-  constructor(context, life = 100) {
+  constructor(context) {
     this.context = context;
-    this.baseLife = life;
+    this.x = 0;
+    this.y = 0;
+    this.lineWidth = 0;
+    this.angle = 0;
+    this.offsetX = 0;
+    this.offsetY = 0;
+    this.velocityAngle = 0;
+    this.previousX = 0;
+    this.previousY = 0;
     return this;
   }
 
-  set ({x = 0, y = 0, angle = Math.random() * Math.PI * 2, velocityAngle = 0}) {
+  set ({x = 0, y = 0, angle = Math.random() * Math.PI * 2, velocityAngle = 0, lineWidth = 1}) {
     this.x = x;
     this.y = y;
+    this.lineWidth = Math.max(1, lineWidth);
     this.angle = angle;
     this.offsetX = Math.cos(this.angle);
     this.offsetY = Math.sin(this.angle);
@@ -19,8 +28,8 @@ export default class Boid {
     return this;
   }
 
-  reset ({x, y, angle, velocityAngle, life = this.baseLife}) {
-    this.set({x, y, angle, velocityAngle});
+  reset ({x, y, angle, velocityAngle, lineWidth, life = -1}) {
+    this.set({x, y, angle, velocityAngle, lineWidth});
     this.life = life;
     this.isDead = false;
     return this;
@@ -41,8 +50,8 @@ export default class Boid {
       this.offsetX = Math.cos(this.angle);
       this.offsetY = Math.sin(this.angle);
     }
-    this.x += this.offsetX * this.context.lineWidth * 2;
-    this.y += this.offsetY * this.context.lineWidth * 2;
+    this.x += this.offsetX * 2;
+    this.y += this.offsetY * 2;
     this.life--;
     if(this.life === 0) {
       this.kill();
@@ -52,6 +61,7 @@ export default class Boid {
 
   draw () {
     this.context.strokeStyle = 'black';
+    this.context.lineWidth = this.lineWidth;
     this.context.beginPath();
     this.context.moveTo(this.previousX, this.previousY);
     this.context.lineTo(this.x, this.y);
