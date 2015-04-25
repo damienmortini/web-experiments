@@ -3,18 +3,22 @@
 import Boid from './Boid';
 
 export default class BoidSystem {
-  constructor({canvas, normalsCanvas, boidsNumber = 1000}) {
+  constructor({canvas, normalsCanvas, boidsNumber = 1000, speed = 1}) {
 
     this.boids = [];
 
+    this.speed = speed;
     this.canvas = canvas;
     this.context = canvas.getContext('2d');
 
     this.width = this.canvas.width;
     this.height = this.canvas.height;
 
+    this.imageData = new ImageData(this.width, this.height);
+    // console.log(imageData);
+
     for (var i = 0; i < boidsNumber; i++) {
-      let boid = new Boid(this.context);
+      let boid = new Boid();
       boid.isDead = true;
       this.boids.push(boid);
     }
@@ -24,30 +28,42 @@ export default class BoidSystem {
     this.boids.push(this.boids.shift());
   }
   update () {
-    let data = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height).data;
+    // let data = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height).data;
 
-    for(let boid of this.boids) {
+    for (var i = 0; i < this.speed; i++) {
+      for(let boid of this.boids) {
 
-      if (boid.isDead) {
-        continue;
-      }
+        if (boid.isDead) {
+          continue;
+        }
 
-      boid.update();
+        boid.update();
 
-      let pixelAlpha = data[(Math.floor(boid.x) + this.width * Math.floor(boid.y)) * 4 + 3];
+        if (boid.x < 0 || boid.x > this.width || boid.y < 0 || boid.y > this.height) {
+          boid.isDead = true;
+          continue;
+        }
 
-      if(pixelAlpha > 0 || boid.x < 0 || boid.x > this.width || boid.y < 0 || boid.y > this.height) {
-        boid.kill();
-      }
+        let id = (Math.floor(boid.x) + this.width * Math.floor(boid.y)) * 4 + 3;
+        if (this.imageData.data[id]) {
+          boid.isDead = true;
+        }
+        else {
+          this.imageData.data[id] = 255;
+        }
 
-      boid.draw();
+        // boid.draw();
 
-      // Add new boid
-      if(Math.random() < 0.1) {
-        let angle = Math.pow(Math.random(), 100) * (Math.random() > 0.5 ? 1 : -1) + boid.angle + Math.PI * 0.5 * (Math.random() > 0.5 ? 1 : -1);
-        let velocityAngle = Math.pow(Math.random(), 500) * 0.1 * (Math.random() > 0.5 ? 1 : -1);
-        this.add({x: boid.x, y: boid.y, angle, velocityAngle, life:boid.life, lineWidth: boid.lineWidth - 1});
+        // Add new boid
+        if(Math.random() < 0.1) {
+          let angle = Math.pow(Math.random(), 100) * (Math.random() > 0.5 ? 1 : -1) + boid.angle + Math.PI * 0.5 * (Math.random() > 0.5 ? 1 : -1);
+          let velocityAngle = Math.pow(Math.random(), 500) * 0.1 * (Math.random() > 0.5 ? 1 : -1);
+          this.add({x: boid.x, y: boid.y, angle, velocityAngle, life:boid.life, lineWidth: boid.lineWidth - 1});
+        }
       }
     }
+
+
+    this.context.putImageData(this.imageData, 0, 0);
   }
 }

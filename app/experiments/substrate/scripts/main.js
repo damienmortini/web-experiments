@@ -1,6 +1,7 @@
 'use strict';
 
 import BoidSystem3D from 'dmmn/substrate/BoidSystem3D';
+import BoidSystem from 'dmmn/substrate/BoidSystem';
 
 class Main {
   constructor() {
@@ -13,11 +14,11 @@ class Main {
     let normalsCanvas = document.querySelector('canvas#normals');
     let depthCanvas = document.querySelector('canvas#depth');
 
-    this.boidSystem = new BoidSystem3D({
+    this.boidSystem = new BoidSystem({
       canvas,
-      normalsCanvas,
-      depthCanvas,
-      boidsNumber: 1000
+      // normalsCanvas,
+      // depthCanvas,
+      boidsNumber: 10000
     });
 
     this.pointer = {

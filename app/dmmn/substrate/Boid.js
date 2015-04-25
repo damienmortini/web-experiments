@@ -1,8 +1,7 @@
 'use strict';
 
 export default class Boid {
-  constructor(context) {
-    this.context = context;
+  constructor() {
     this.x = 0;
     this.y = 0;
     this.lineWidth = 0;
@@ -10,8 +9,6 @@ export default class Boid {
     this.offsetX = 0;
     this.offsetY = 0;
     this.velocityAngle = 0;
-    this.previousX = 0;
-    this.previousY = 0;
     return this;
   }
 
@@ -23,8 +20,6 @@ export default class Boid {
     this.offsetX = Math.cos(this.angle);
     this.offsetY = Math.sin(this.angle);
     this.velocityAngle = velocityAngle;
-    this.previousX = this.x;
-    this.previousY = this.y;
     return this;
   }
 
@@ -35,37 +30,21 @@ export default class Boid {
     return this;
   }
 
-  kill () {
-    this.isDead = true;
-    this.velocityX = 0;
-    this.velocityY = 0;
-    return this;
-  }
-
   update () {
-    this.previousX = this.x;
-    this.previousY = this.y;
+    if (this.isDead) {
+      return this;
+    }
     if (this.velocityAngle) {
       this.angle += this.velocityAngle;
       this.offsetX = Math.cos(this.angle);
       this.offsetY = Math.sin(this.angle);
     }
-    this.x += this.offsetX * 2;
-    this.y += this.offsetY * 2;
+    this.x += this.offsetX;
+    this.y += this.offsetY;
     this.life--;
     if(this.life === 0) {
-      this.kill();
+      this.isDead = true;
     }
-    return this;
-  }
-
-  draw () {
-    this.context.strokeStyle = 'black';
-    this.context.lineWidth = this.lineWidth;
-    this.context.beginPath();
-    this.context.moveTo(this.previousX, this.previousY);
-    this.context.lineTo(this.x, this.y);
-    this.context.stroke();
     return this;
   }
 }

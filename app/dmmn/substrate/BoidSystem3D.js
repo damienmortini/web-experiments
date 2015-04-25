@@ -10,20 +10,24 @@ export default class BoidSystem3D extends BoidSystem {
     this.wallsOffset = 20;
 
     if(normalsCanvas) {
-      normalsCanvas.width = this.width;
-      normalsCanvas.height = this.height;
-      this.normalsContext = normalsCanvas.getContext('2d');
+      // this.normalsCanvas = document.createElement('canvas');
+      this.normalsCanvas = normalsCanvas;
+      this.normalsCanvas.width = this.width;
+      this.normalsCanvas.height = this.height;
+      this.normalsContext = this.normalsCanvas.getContext('2d');
       this.normalsContext.fillStyle = 'rgb(128, 128, 255)';
-      this.normalsContext.fillRect(0, 0, normalsCanvas.width, normalsCanvas.height);
+      this.normalsContext.fillRect(0, 0, this.normalsCanvas.width, this.normalsCanvas.height);
       this.normalsContext.lineWidth = 3;
     }
 
     if(depthCanvas) {
-      depthCanvas.width = this.width;
-      depthCanvas.height = this.height;
-      this.depthContext = depthCanvas.getContext('2d');
+      // this.depthCanvas = document.createElement('canvas');
+      this.depthCanvas = depthCanvas;
+      this.depthCanvas.width = this.width;
+      this.depthCanvas.height = this.height;
+      this.depthContext = this.depthCanvas.getContext('2d');
       this.depthContext.fillStyle = 'white';
-      this.depthContext.fillRect(0, 0, depthCanvas.width, depthCanvas.height);
+      this.depthContext.fillRect(0, 0, this.depthCanvas.width, this.depthCanvas.height);
       this.depthContext.lineWidth = 3;
       this.depthContext.globalCompositeOperation = 'multiply';
     }
@@ -77,5 +81,7 @@ export default class BoidSystem3D extends BoidSystem {
         this.depthContext.restore();
       }
     }
+    // this.context.drawImage(this.normalsCanvas, 0, 0, this.width, this.height);
+    // this.context.drawImage(this.depthCanvas, 0, 0, this.width, this.height);
   }
 }
