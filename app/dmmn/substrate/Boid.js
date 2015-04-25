@@ -4,7 +4,6 @@ export default class Boid {
   constructor() {
     this.x = 0;
     this.y = 0;
-    this.lineWidth = 0;
     this.angle = 0;
     this.offsetX = 0;
     this.offsetY = 0;
@@ -12,10 +11,9 @@ export default class Boid {
     return this;
   }
 
-  set ({x = 0, y = 0, angle = Math.random() * Math.PI * 2, velocityAngle = 0, lineWidth = 1}) {
+  set ({x = 0, y = 0, angle = Math.random() * Math.PI * 2, velocityAngle = 0}) {
     this.x = x;
     this.y = y;
-    this.lineWidth = Math.max(1, lineWidth);
     this.angle = angle;
     this.offsetX = Math.cos(this.angle);
     this.offsetY = Math.sin(this.angle);
@@ -23,8 +21,8 @@ export default class Boid {
     return this;
   }
 
-  reset ({x, y, angle, velocityAngle, lineWidth, life = -1}) {
-    this.set({x, y, angle, velocityAngle, lineWidth});
+  reset ({x, y, angle, velocityAngle, life = -1}) {
+    this.set({x, y, angle, velocityAngle});
     this.life = life;
     this.isDead = false;
     return this;

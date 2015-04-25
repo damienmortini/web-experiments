@@ -3,33 +3,41 @@
 import Boid from './Boid';
 
 export default class BoidSystem {
-  constructor({canvas, normalsCanvas, boidsNumber = 1000, speed = 1}) {
+  constructor({width, height, boidsCachedNumber = 0, speed = 1}) {
 
     this.boids = [];
 
     this.speed = speed;
-    this.canvas = canvas;
-    this.context = canvas.getContext('2d');
 
-    this.width = this.canvas.width;
-    this.height = this.canvas.height;
+    console.log(width, height);
+
+    this.width = width;
+    this.height = height;
 
     this.imageData = new ImageData(this.width, this.height);
-    // console.log(imageData);
 
-    for (var i = 0; i < boidsNumber; i++) {
+    for (var i = 0; i < boidsCachedNumber; i++) {
       let boid = new Boid();
       boid.isDead = true;
       this.boids.push(boid);
     }
   }
-  add ({x, y, angle, velocityAngle, life, lineWidth}) {
-    this.boids[0].reset({x, y, angle, velocityAngle, life, lineWidth});
-    this.boids.push(this.boids.shift());
-  }
-  update () {
-    // let data = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height).data;
 
+  add ({x, y, angle, velocityAngle, life, lineWidth}) {
+    let deadBoid;
+    for(let boid of this.boids) {
+      if (boid.isDead) {
+        deadBoid = boid;
+      }
+    }
+    if (!deadBoid) {
+      deadBoid = new Boid();
+      this.boids.push(deadBoid);
+    }
+    deadBoid.reset({x, y, angle, velocityAngle, life, lineWidth});
+  }
+
+  update () {
     for (var i = 0; i < this.speed; i++) {
       for(let boid of this.boids) {
 
@@ -52,8 +60,6 @@ export default class BoidSystem {
           this.imageData.data[id] = 255;
         }
 
-        // boid.draw();
-
         // Add new boid
         if(Math.random() < 0.1) {
           let angle = Math.pow(Math.random(), 100) * (Math.random() > 0.5 ? 1 : -1) + boid.angle + Math.PI * 0.5 * (Math.random() > 0.5 ? 1 : -1);
@@ -62,8 +68,5 @@ export default class BoidSystem {
         }
       }
     }
-
-
-    this.context.putImageData(this.imageData, 0, 0);
   }
 }

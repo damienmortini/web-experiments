@@ -3,9 +3,9 @@
 import BoidSystem from './BoidSystem';
 
 export default class BoidSystem3D extends BoidSystem {
-  constructor({canvas, boidsNumber, normalsCanvas, depthCanvas}) {
+  constructor({width, height, boidsNumber, normalsCanvas, depthCanvas}) {
 
-    super({canvas, boidsNumber});
+    super(arguments[0]);
 
     this.wallsOffset = 20;
 
