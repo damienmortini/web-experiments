@@ -3,24 +3,16 @@
 import Boid from './Boid';
 
 export default class BoidSystem {
-  constructor({width, height, boidsCachedNumber = 0, speed = 1}) {
+  constructor({width, height, speed = 1}) {
 
     this.boids = [];
 
     this.speed = speed;
 
-    console.log(width, height);
-
     this.width = width;
     this.height = height;
 
     this.imageData = new ImageData(this.width, this.height);
-
-    for (var i = 0; i < boidsCachedNumber; i++) {
-      let boid = new Boid();
-      boid.isDead = true;
-      this.boids.push(boid);
-    }
   }
 
   add ({x, y, angle, velocityAngle, life, lineWidth}) {

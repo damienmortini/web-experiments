@@ -1,7 +1,7 @@
 'use strict';
 
-import BoidSystem3D from 'dmmn/substrate/BoidSystem3D';
-import BoidSystem from 'dmmn/substrate/BoidSystem';
+import BoidSystem3D from 'dlib/substrate/BoidSystem3D';
+import BoidSystem from 'dlib/substrate/BoidSystem';
 
 class Main {
   constructor() {

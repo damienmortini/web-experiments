@@ -3,21 +3,21 @@
 import BoidSystem from './BoidSystem';
 
 export default class BoidSystem3D extends BoidSystem {
-  constructor({width, height, boidsNumber, normalsCanvas, depthCanvas}) {
+  constructor({width, height, boidsNumber, computeNormals, depthCanvas}) {
 
     super(arguments[0]);
 
     this.wallsOffset = 20;
 
-    if(normalsCanvas) {
-      // this.normalsCanvas = document.createElement('canvas');
-      this.normalsCanvas = normalsCanvas;
-      this.normalsCanvas.width = this.width;
-      this.normalsCanvas.height = this.height;
-      this.normalsContext = this.normalsCanvas.getContext('2d');
-      this.normalsContext.fillStyle = 'rgb(128, 128, 255)';
-      this.normalsContext.fillRect(0, 0, this.normalsCanvas.width, this.normalsCanvas.height);
-      this.normalsContext.lineWidth = 3;
+    if(computeNormals) {
+      let normalsCanvas = document.createElement('canvas');
+      normalsCanvas = normalsCanvas;
+      normalsCanvas.width = this.width;
+      normalsCanvas.height = this.height;
+      let normalsContext = normalsCanvas.getContext('2d');
+      normalsContext.fillStyle = 'rgb(128, 128, 255)';
+      normalsContext.fillRect(0, 0, normalsCanvas.width, normalsCanvas.height);
+      this.normalsImageData = normalsContext.getImageData(0, 0, normalsCanvas.width, normalsCanvas.height);
     }
 
     if(depthCanvas) {

@@ -25,7 +25,7 @@ exports.config = {
         'vendors/common.js': [
           'node_modules/babel-brunch/node_modules/babel-core/browser-polyfill.js',
           'bower_components/fetch/**/*',
-          'app/dmmn/**/*'
+          'app/dlib/**/*'
         ],
         'scripts/main.js': /^app[\\/]scripts/,
         'vendors/dat-gui.js': 'bower_components/dat-gui/**/*',
