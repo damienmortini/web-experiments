@@ -1,6 +1,4 @@
-'use strict';
-
-import BoidSystem from './BoidSystem';
+import BoidSystem from "./BoidSystem";
 
 export default class BoidSystem3D extends BoidSystem {
   constructor({width, height, boidsNumber, computeNormals, depthCanvas}) {

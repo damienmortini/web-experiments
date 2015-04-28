@@ -1,29 +1,22 @@
-'use strict';
+import Particle from "../physics/Particle";
 
-export default class Boid {
-  constructor() {
-    this.x = 0;
-    this.y = 0;
-    this.angle = 0;
-    this.offsetX = 0;
-    this.offsetY = 0;
-    this.velocityAngle = 0;
-    return this;
-  }
-
-  set ({x = 0, y = 0, angle = Math.random() * Math.PI * 2, velocityAngle = 0}) {
-    this.x = x;
-    this.y = y;
-    this.angle = angle;
-    this.offsetX = Math.cos(this.angle);
-    this.offsetY = Math.sin(this.angle);
+export default class Boid extends Particle {
+  constructor(x = 0, y = 0, velocityAngle = Math.random() * Math.PI * 2, offsetAngle = 0, life = Infinity) {
+    super(x, y, Math.cos(velocityAngle), Math.sin(velocityAngle), life);
     this.velocityAngle = velocityAngle;
+    this.offsetAngle = offsetAngle;
     return this;
   }
 
-  reset ({x, y, angle, velocityAngle, life = -1}) {
-    this.set({x, y, angle, velocityAngle});
-    this.life = life;
+  set (x = this.x, y = this.y, velocityAngle = this.velocityAngle, offsetAngle = this.offsetAngle, life = Infinity) {
+    this.velocityAngle = velocityAngle;
+    this.offsetAngle = offsetAngle;
+    super.set(x, y, Math.cos(this.velocityAngle), Math.sin(this.velocityAngle), life);
+    return this;
+  }
+
+  reset (x = 0, y = 0, velocityAngle = Math.random() * Math.PI * 2, offsetAngle = 0, life = Infinity) {
+    this.set(x, y, velocityAngle, offsetAngle, life);
     this.isDead = false;
     return this;
   }
@@ -32,17 +25,12 @@ export default class Boid {
     if (this.isDead) {
       return this;
     }
-    if (this.velocityAngle) {
-      this.angle += this.velocityAngle;
-      this.offsetX = Math.cos(this.angle);
-      this.offsetY = Math.sin(this.angle);
+    if (this.offsetAngle) {
+      this.velocityAngle += this.offsetAngle;
+      this.velocity.x = Math.cos(this.velocityAngle);
+      this.velocity.y = Math.sin(this.velocityAngle);
     }
-    this.x += this.offsetX;
-    this.y += this.offsetY;
-    this.life--;
-    if(this.life === 0) {
-      this.isDead = true;
-    }
+    super.update();
     return this;
   }
 }

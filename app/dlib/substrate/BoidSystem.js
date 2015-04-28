@@ -1,37 +1,36 @@
-'use strict';
-
-import Boid from './Boid';
+import Boid from "./Boid";
+// import Vector2 from "../math/Vector2";
+// import Edge from "../math/Edge";
 
 export default class BoidSystem {
-  constructor({width, height, speed = 1}) {
+  constructor(width, height, speed = 1, spawnProbabilityRatio = 0.1) {
 
     this.boids = [];
+    // this.edges = [];
 
     this.speed = speed;
+    this.spawnProbabilityRatio = spawnProbabilityRatio;
 
     this.width = width;
     this.height = height;
 
+    this.data = new Uint32Array(this.width * this.height);
     this.imageData = new ImageData(this.width, this.height);
   }
 
-  add ({x, y, angle, velocityAngle, life, lineWidth}) {
-    let deadBoid;
-    for(let boid of this.boids) {
-      if (boid.isDead) {
-        deadBoid = boid;
-      }
-    }
-    if (!deadBoid) {
-      deadBoid = new Boid();
-      this.boids.push(deadBoid);
-    }
-    deadBoid.reset({x, y, angle, velocityAngle, life, lineWidth});
+  add (x, y, velocityAngle, offsetAngle, life) {
+    let boid = new Boid(x, y, velocityAngle, offsetAngle, life);
+    this.boids.push(boid);
+
+    // let edge = new Edge(new Vector2(boid.x, boid.y), new Vector2(boid.x, boid.y));
+    // this.edges.push(edge);
   }
 
   update () {
-    for (var i = 0; i < this.speed; i++) {
-      for(let boid of this.boids) {
+    for (let i = 0; i < this.speed; i++) {
+      for(let [i, boid] of this.boids.entries()) {
+
+        let boidId = i + 1;
 
         if (boid.isDead) {
           continue;
@@ -40,23 +39,26 @@ export default class BoidSystem {
         boid.update();
 
         if (boid.x < 0 || boid.x > this.width || boid.y < 0 || boid.y > this.height) {
-          boid.isDead = true;
+          boid.kill();
           continue;
         }
 
-        let id = (Math.floor(boid.x) + this.width * Math.floor(boid.y)) * 4 + 3;
-        if (this.imageData.data[id]) {
-          boid.isDead = true;
+        let id = (Math.floor(boid.x) + this.width * Math.floor(boid.y));
+
+        let pixelId = this.data[id];
+
+        if (pixelId && pixelId !== boidId) {
+          boid.kill();
         }
         else {
-          this.imageData.data[id] = 255;
+          this.data[id] = boidId;
+          this.imageData.data[id * 4 + 3] = 255;
         }
 
         // Add new boid
-        if(Math.random() < 0.1) {
-          let angle = Math.pow(Math.random(), 100) * (Math.random() > 0.5 ? 1 : -1) + boid.angle + Math.PI * 0.5 * (Math.random() > 0.5 ? 1 : -1);
-          let velocityAngle = Math.pow(Math.random(), 500) * 0.1 * (Math.random() > 0.5 ? 1 : -1);
-          this.add({x: boid.x, y: boid.y, angle, velocityAngle, life:boid.life, lineWidth: boid.lineWidth - 1});
+        if(Math.random() < this.spawnProbabilityRatio) {
+          let velocityAngle = Math.pow(Math.random(), 100) * (Math.random() > 0.5 ? 1 : -1) + boid.velocityAngle + Math.PI * 0.5 * (Math.random() > 0.5 ? 1 : -1);
+          this.add(boid.x, boid.y, velocityAngle, 0, boid.life);
         }
       }
     }

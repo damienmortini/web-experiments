@@ -1,29 +1,20 @@
-'use strict';
-
-import BoidSystem3D from 'dlib/substrate/BoidSystem3D';
-import BoidSystem from 'dlib/substrate/BoidSystem';
+// import BoidSystem3D from "dlib/substrate/BoidSystem3D";
+import BoidSystem from "dlib/substrate/BoidSystem";
 
 class Main {
   constructor() {
 
-    let canvas = document.querySelector('canvas#main');
+    let canvas = document.querySelector("canvas#main");
 
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
 
-    this.context = canvas.getContext('2d');
+    this.context = canvas.getContext("2d");
 
-    let normalsCanvas = document.querySelector('canvas#normals');
-    let depthCanvas = document.querySelector('canvas#depth');
+    // let normalsCanvas = document.querySelector("canvas#normals");
+    // let depthCanvas = document.querySelector("canvas#depth");
 
-    this.boidSystem = new BoidSystem3D({
-      width: canvas.width,
-      height: canvas.height,
-      normalsCanvas,
-      // depthCanvas,
-      // boidsCachedNumber: 10000,
-      speed: 3
-    });
+    this.boidSystem = new BoidSystem(canvas.width, canvas.height, 10, 0.01);
 
     this.pointer = {
       previousX: 0,
@@ -34,13 +25,13 @@ class Main {
       angle: 0
     };
 
-    canvas.addEventListener('mousedown', this.onCanvasPointerDown.bind(this));
-    canvas.addEventListener('mousemove', this.onCanvasPointerMove.bind(this));
-    canvas.addEventListener('mouseup', this.onCanvasPointerUp.bind(this));
+    canvas.addEventListener("mousedown", this.onCanvasPointerDown.bind(this));
+    canvas.addEventListener("mousemove", this.onCanvasPointerMove.bind(this));
+    canvas.addEventListener("mouseup", this.onCanvasPointerUp.bind(this));
 
     this.update();
 
-    // this.boidSystem.add({x: canvas.width * .5, y: canvas.height * .5});
+    this.boidSystem.add(canvas.width * 0.5, canvas.height * 0.5, 0, (Math.random() - 0.5) * 0.1);
   }
 
   onCanvasPointerDown () {
@@ -61,17 +52,18 @@ class Main {
   update () {
     requestAnimationFrame(this.update.bind(this));
 
-    let angle = Math.atan2(this.pointer.y - this.pointer.previousY, this.pointer.x - this.pointer.previousX);
+    // let velocityAngle = Math.atan2(this.pointer.y - this.pointer.previousY, this.pointer.x - this.pointer.previousX);
 
     // if(this.pointer.down) {
-    if(this.pointer.previousX - this.pointer.x !== 0 && this.pointer.previousX - this.pointer.x !== 0) {
-      this.boidSystem.add({
-        x: this.pointer.x,
-        y: this.pointer.y,
-        angle,
-        life: 500
-      });
-    }
+    // if(Math.abs(this.pointer.previousX - this.pointer.x) > 0 && Math.abs(this.pointer.previousY - this.pointer.y) > 0) {
+    //   this.boidSystem.add(
+    //     this.pointer.x,
+    //     this.pointer.y,
+    //     velocityAngle,
+    //     (Math.random() - 0.5) * 0.1,
+    //     500
+    //   );
+    // }
 
     this.boidSystem.update();
 
