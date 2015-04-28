@@ -14,7 +14,7 @@ class Main {
     // let normalsCanvas = document.querySelector("canvas#normals");
     // let depthCanvas = document.querySelector("canvas#depth");
 
-    this.boidSystem = new BoidSystem(this.canvas.width, this.canvas.height, 1, 0.005);
+    this.boidSystem = new BoidSystem(this.canvas.width, this.canvas.height, 10, 0.05);
 
     this.pointer = {
       previousX: 0,

@@ -7,7 +7,6 @@ const DEBUG = true;
 export default class BoidSystem {
   constructor(width, height, speed = 1, spawnProbabilityRatio = 0.1) {
 
-    this.boids = [];
     this.edges = [];
 
     this.speed = speed;
@@ -22,16 +21,15 @@ export default class BoidSystem {
 
   add (x, y, velocityAngle, offsetAngle, life) {
     let boid = new Boid(x, y, velocityAngle, offsetAngle, life);
-
     let edge = new SubstrateEdge(new Vector2(boid.x, boid.y), new Vector2(boid.x, boid.y), boid);
-
     this.edges.push(edge);
+    return edge;
   }
 
   update () {
     for (let i = 0; i < this.speed; i++) {
-      for(let [i, edge] of this.edges.entries()) {
-
+      for (let i = 0; i < this.edges.length; i++) {
+        let edge = this.edges[i];
         if (edge.boid.isDead) {
           continue;
         }
@@ -46,50 +44,50 @@ export default class BoidSystem {
         let position = Math.floor(edge.b.x) + this.width * Math.floor(edge.b.y);
 
         let pixelId = this.data[position];
+        let edgeId = i + 1;
 
-        if (pixelId && pixelId !== i + 1) {
+        if (pixelId && pixelId !== edgeId) {
           edge.boid.kill();
-          this.splitEdge(edge.b, this.edges[pixelId - 1]);
+          this.splitEdge(edge, pixelId);
         }
         else {
-          this.data[position] = i + 1;
+          this.data[position] = edgeId;
           if (DEBUG) {
             this.setDebugColor(position);
           }
         }
 
         // Add new edge
-        // if(Math.random() < this.spawnProbabilityRatio) {
-        //   let velocityAngle = Math.pow(Math.random(), 100) * (Math.random() > 0.5 ? 1 : -1) + edge.boid.velocityAngle + Math.PI * 0.5 * (Math.random() > 0.5 ? 1 : -1);
-        //   this.add(edge.boid.x, edge.boid.y, velocityAngle, 0, edge.boid.life);
-        // }
+        if(Math.random() < this.spawnProbabilityRatio) {
+          let velocityAngle = Math.pow(Math.random(), 100) * (Math.random() > 0.5 ? 1 : -1) + edge.boid.velocityAngle + Math.PI * 0.5 * (Math.random() > 0.5 ? 1 : -1);
+          this.splitEdge(edge, edgeId);
+          this.add(edge.b.x, edge.b.y, velocityAngle, 0, edge.boid.life);
+        }
       }
     }
   }
 
-  splitEdge (collisionPosition, collidedEdge) {
-    collidedEdge.b.copy(collisionPosition);
+  splitEdge (edge, edgeId) {
+    let collidedEdge = this.edges[edgeId - 1];
+    collidedEdge.b.copy(edge.b);
 
-    if (!collidedEdge.boid.isDead) {
-      this.add(collidedEdge.boid.x, collidedEdge.boid.y, collidedEdge.boid.velocityAngle, collidedEdge.boid.offsetAngle, collidedEdge.boid.life);
+    let newEdge = this.add(collidedEdge.boid.x, collidedEdge.boid.y, collidedEdge.boid.velocityAngle, collidedEdge.boid.offsetAngle, collidedEdge.boid.life);
+    if (collidedEdge.boid.isDead) {
+      newEdge.boid.kill();
     }
-
-    // let sweepBoid = new Boid(collisionPosition.x, collisionPosition.y, collidedEdge.boid.velocityAngle, collidedEdge.boid.offsetAngle);
-    // sweepBoid.update();
-    // let sweepPosition = Math.floor(sweepBoid.x) + this.width * Math.floor(sweepBoid.y);
-    // while (this.data[Math.floor(sweepBoid.x) + this.width * Math.floor(sweepBoid.y)] === pixelId) {
-    //   // console.log(this.data[Math.floor(sweepBoid.x) + this.width * Math.floor(sweepBoid.y)], pixelId);
-    //   sweepBoid.update();
-    //   this.data[sweepPosition] = this.edges.length;
-    //   if (DEBUG) {
-    //     this.setDebugColor(sweepPosition);
-    //   }
-    //   sweepPosition = Math.floor(sweepBoid.x) + this.width * Math.floor(sweepBoid.y);
-    // }
-
     collidedEdge.boid.kill();
+    newEdge.a.copy(edge.b);
 
-    this.edges[this.edges.length - 1].a.copy(collisionPosition);
+    let sweepBoid = new Boid(edge.b.x, edge.b.y, collidedEdge.boid.velocityAngle, collidedEdge.boid.offsetAngle);
+    let sweepPosition = Math.floor(sweepBoid.x) + this.width * Math.floor(sweepBoid.y);
+    while (this.data[Math.floor(sweepBoid.x) + this.width * Math.floor(sweepBoid.y)] === edgeId) {
+      sweepBoid.update();
+      this.data[sweepPosition] = this.edges.length;
+      if (DEBUG) {
+        this.setDebugColor(sweepPosition);
+      }
+      sweepPosition = Math.floor(sweepBoid.x) + this.width * Math.floor(sweepBoid.y);
+    }
   }
 
   setDebugColor (position) {
