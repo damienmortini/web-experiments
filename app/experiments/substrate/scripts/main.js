@@ -4,17 +4,17 @@ import BoidSystem from "dlib/substrate/BoidSystem";
 class Main {
   constructor() {
 
-    let canvas = document.querySelector("canvas#main");
+    this.canvas = document.querySelector("canvas#main");
 
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    this.canvas.width = this.canvas.offsetWidth;
+    this.canvas.height = this.canvas.offsetHeight;
 
-    this.context = canvas.getContext("2d");
+    this.context = this.canvas.getContext("2d");
 
     // let normalsCanvas = document.querySelector("canvas#normals");
     // let depthCanvas = document.querySelector("canvas#depth");
 
-    this.boidSystem = new BoidSystem(canvas.width, canvas.height, 10, 0.01);
+    this.boidSystem = new BoidSystem(this.canvas.width, this.canvas.height, 10, 0.01);
 
     this.pointer = {
       previousX: 0,
@@ -25,13 +25,13 @@ class Main {
       angle: 0
     };
 
-    canvas.addEventListener("mousedown", this.onCanvasPointerDown.bind(this));
-    canvas.addEventListener("mousemove", this.onCanvasPointerMove.bind(this));
-    canvas.addEventListener("mouseup", this.onCanvasPointerUp.bind(this));
+    this.canvas.addEventListener("mousedown", this.onCanvasPointerDown.bind(this));
+    this.canvas.addEventListener("mousemove", this.onCanvasPointerMove.bind(this));
+    this.canvas.addEventListener("mouseup", this.onCanvasPointerUp.bind(this));
 
     this.update();
 
-    this.boidSystem.add(canvas.width * 0.5, canvas.height * 0.5, 0, (Math.random() - 0.5) * 0.1);
+    this.boidSystem.add(this.canvas.width * 0.5, this.canvas.height * 0.5);
   }
 
   onCanvasPointerDown () {
@@ -52,6 +52,8 @@ class Main {
   update () {
     requestAnimationFrame(this.update.bind(this));
 
+    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
     // let velocityAngle = Math.atan2(this.pointer.y - this.pointer.previousY, this.pointer.x - this.pointer.previousX);
 
     // if(this.pointer.down) {
@@ -67,7 +69,16 @@ class Main {
 
     this.boidSystem.update();
 
-    this.context.putImageData(this.boidSystem.imageData, 0, 0);
+    for (let i = 0; i < this.boidSystem.halfEdges.length; i++) {
+      let halfEdge = this.boidSystem.halfEdges[i];
+      this.context.strokeStyle = `hsl(${i * 50 % 360}, 100%, 50%)`;
+      this.context.beginPath();
+      this.context.moveTo(halfEdge.a.x, halfEdge.a.y);
+      this.context.lineTo(halfEdge.b.x, halfEdge.b.y);
+      this.context.stroke();
+    }
+
+    // this.context.putImageData(this.boidSystem.imageData, 0, 0);
   }
 }
 

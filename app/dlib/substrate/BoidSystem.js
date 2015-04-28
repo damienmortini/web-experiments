@@ -1,12 +1,12 @@
 import Boid from "./Boid";
-// import Vector2 from "../math/Vector2";
-// import Edge from "../math/Edge";
+import Vector2 from "../math/Vector2";
+import HalfEdge from "./HalfEdge";
 
 export default class BoidSystem {
   constructor(width, height, speed = 1, spawnProbabilityRatio = 0.1) {
 
     this.boids = [];
-    // this.edges = [];
+    this.halfEdges = [];
 
     this.speed = speed;
     this.spawnProbabilityRatio = spawnProbabilityRatio;
@@ -22,8 +22,8 @@ export default class BoidSystem {
     let boid = new Boid(x, y, velocityAngle, offsetAngle, life);
     this.boids.push(boid);
 
-    // let edge = new Edge(new Vector2(boid.x, boid.y), new Vector2(boid.x, boid.y));
-    // this.edges.push(edge);
+    let halfEdge = new HalfEdge(new Vector2(boid.x, boid.y), new Vector2(boid.x, boid.y));
+    this.halfEdges.push(halfEdge);
   }
 
   update () {
@@ -37,6 +37,8 @@ export default class BoidSystem {
         }
 
         boid.update();
+
+        this.halfEdges[i].b.set(boid.x, boid.y);
 
         if (boid.x < 0 || boid.x > this.width || boid.y < 0 || boid.y > this.height) {
           boid.kill();
