@@ -19,5 +19,6 @@
     "url": "https://dmmn@github.com/dmmn/web-experiments.git"
   },
   "author": "Damien Mortini",
-  "homepage": "https://github.com/dmmn/web-experiments"
+  "homepage": "https://github.com/dmmn/web-experiments",
+  "devDependencies": {}
 }
