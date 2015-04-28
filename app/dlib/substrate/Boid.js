@@ -25,11 +25,11 @@ export default class Boid extends Particle {
     if (this.isDead) {
       return this;
     }
-    if (this.offsetAngle) {
-      this.velocityAngle += this.offsetAngle;
-      this.velocity.x = Math.cos(this.velocityAngle);
-      this.velocity.y = Math.sin(this.velocityAngle);
-    }
+    // if (this.offsetAngle) {
+    //   this.velocityAngle += this.offsetAngle;
+    //   this.velocity.x = Math.cos(this.velocityAngle);
+    //   this.velocity.y = Math.sin(this.velocityAngle);
+    // }
     super.update();
     return this;
   }

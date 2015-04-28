@@ -1,12 +1,14 @@
 import Boid from "./Boid";
 import Vector2 from "../math/Vector2";
-import HalfEdge from "./HalfEdge";
+import SubstrateEdge from "./SubstrateEdge";
+
+const DEBUG = true;
 
 export default class BoidSystem {
   constructor(width, height, speed = 1, spawnProbabilityRatio = 0.1) {
 
     this.boids = [];
-    this.halfEdges = [];
+    this.edges = [];
 
     this.speed = speed;
     this.spawnProbabilityRatio = spawnProbabilityRatio;
@@ -20,49 +22,82 @@ export default class BoidSystem {
 
   add (x, y, velocityAngle, offsetAngle, life) {
     let boid = new Boid(x, y, velocityAngle, offsetAngle, life);
-    this.boids.push(boid);
 
-    let halfEdge = new HalfEdge(new Vector2(boid.x, boid.y), new Vector2(boid.x, boid.y));
-    this.halfEdges.push(halfEdge);
+    let edge = new SubstrateEdge(new Vector2(boid.x, boid.y), new Vector2(boid.x, boid.y), boid);
+
+    this.edges.push(edge);
   }
 
   update () {
     for (let i = 0; i < this.speed; i++) {
-      for(let [i, boid] of this.boids.entries()) {
+      for(let [i, edge] of this.edges.entries()) {
 
-        let boidId = i + 1;
-
-        if (boid.isDead) {
+        if (edge.boid.isDead) {
           continue;
         }
 
-        boid.update();
+        edge.update();
 
-        this.halfEdges[i].b.set(boid.x, boid.y);
-
-        if (boid.x < 0 || boid.x > this.width || boid.y < 0 || boid.y > this.height) {
-          boid.kill();
+        if (edge.boid.x < 0 || edge.boid.x > this.width || edge.boid.y < 0 || edge.boid.y > this.height) {
+          edge.boid.kill();
           continue;
         }
 
-        let id = (Math.floor(boid.x) + this.width * Math.floor(boid.y));
+        let position = Math.floor(edge.b.x) + this.width * Math.floor(edge.b.y);
 
-        let pixelId = this.data[id];
+        let pixelId = this.data[position];
 
-        if (pixelId && pixelId !== boidId) {
-          boid.kill();
+        if (pixelId && pixelId !== i + 1) {
+          edge.boid.kill();
+          this.splitEdge(edge.b, this.edges[pixelId - 1]);
         }
         else {
-          this.data[id] = boidId;
-          this.imageData.data[id * 4 + 3] = 255;
+          this.data[position] = i + 1;
+          if (DEBUG) {
+            this.setDebugColor(position);
+          }
         }
 
-        // Add new boid
-        if(Math.random() < this.spawnProbabilityRatio) {
-          let velocityAngle = Math.pow(Math.random(), 100) * (Math.random() > 0.5 ? 1 : -1) + boid.velocityAngle + Math.PI * 0.5 * (Math.random() > 0.5 ? 1 : -1);
-          this.add(boid.x, boid.y, velocityAngle, 0, boid.life);
-        }
+        // Add new edge
+        // if(Math.random() < this.spawnProbabilityRatio) {
+        //   let velocityAngle = Math.pow(Math.random(), 100) * (Math.random() > 0.5 ? 1 : -1) + edge.boid.velocityAngle + Math.PI * 0.5 * (Math.random() > 0.5 ? 1 : -1);
+        //   this.add(edge.boid.x, edge.boid.y, velocityAngle, 0, edge.boid.life);
+        // }
       }
     }
+  }
+
+  splitEdge (collisionPosition, collidedEdge) {
+    collidedEdge.b.copy(collisionPosition);
+
+    if (!collidedEdge.boid.isDead) {
+      this.add(collidedEdge.boid.x, collidedEdge.boid.y, collidedEdge.boid.velocityAngle, collidedEdge.boid.offsetAngle, collidedEdge.boid.life);
+    }
+
+    // let sweepBoid = new Boid(collisionPosition.x, collisionPosition.y, collidedEdge.boid.velocityAngle, collidedEdge.boid.offsetAngle);
+    // sweepBoid.update();
+    // let sweepPosition = Math.floor(sweepBoid.x) + this.width * Math.floor(sweepBoid.y);
+    // while (this.data[Math.floor(sweepBoid.x) + this.width * Math.floor(sweepBoid.y)] === pixelId) {
+    //   // console.log(this.data[Math.floor(sweepBoid.x) + this.width * Math.floor(sweepBoid.y)], pixelId);
+    //   sweepBoid.update();
+    //   this.data[sweepPosition] = this.edges.length;
+    //   if (DEBUG) {
+    //     this.setDebugColor(sweepPosition);
+    //   }
+    //   sweepPosition = Math.floor(sweepBoid.x) + this.width * Math.floor(sweepBoid.y);
+    // }
+
+    collidedEdge.boid.kill();
+
+    this.edges[this.edges.length - 1].a.copy(collisionPosition);
+  }
+
+  setDebugColor (position) {
+    let id = this.data[position];
+    let moduloId = id % 7;
+    this.imageData.data[position * 4] = (moduloId === 1 || moduloId === 4 || moduloId === 6) ? 255 : 0;
+    this.imageData.data[position * 4 + 1] = (moduloId === 2 || moduloId === 4 || moduloId === 5) ? 255 : 0;
+    this.imageData.data[position * 4 + 2] = (moduloId === 3 || moduloId === 5 || moduloId === 6) ? 255 : 0;
+    this.imageData.data[position * 4 + 3] = 255;
   }
 }

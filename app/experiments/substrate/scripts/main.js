@@ -14,7 +14,7 @@ class Main {
     // let normalsCanvas = document.querySelector("canvas#normals");
     // let depthCanvas = document.querySelector("canvas#depth");
 
-    this.boidSystem = new BoidSystem(this.canvas.width, this.canvas.height, 10, 0.01);
+    this.boidSystem = new BoidSystem(this.canvas.width, this.canvas.height, 1, 0.005);
 
     this.pointer = {
       previousX: 0,
@@ -31,7 +31,8 @@ class Main {
 
     this.update();
 
-    this.boidSystem.add(this.canvas.width * 0.5, this.canvas.height * 0.5);
+    this.boidSystem.add(this.canvas.width * 0.55, this.canvas.height * 0.5, 0);
+    this.boidSystem.add(this.canvas.width * 0.6, this.canvas.height * 0.6, -Math.PI * .5);
   }
 
   onCanvasPointerDown () {
@@ -69,16 +70,16 @@ class Main {
 
     this.boidSystem.update();
 
-    for (let i = 0; i < this.boidSystem.halfEdges.length; i++) {
-      let halfEdge = this.boidSystem.halfEdges[i];
-      this.context.strokeStyle = `hsl(${i * 50 % 360}, 100%, 50%)`;
-      this.context.beginPath();
-      this.context.moveTo(halfEdge.a.x, halfEdge.a.y);
-      this.context.lineTo(halfEdge.b.x, halfEdge.b.y);
-      this.context.stroke();
-    }
+    // for (let i = 0; i < this.boidSystem.halfEdges.length; i++) {
+    //   let halfEdge = this.boidSystem.halfEdges[i];
+    //   this.context.strokeStyle = `hsl(${i * 50 % 360}, 100%, 50%)`;
+    //   this.context.beginPath();
+    //   this.context.moveTo(halfEdge.a.x, halfEdge.a.y);
+    //   this.context.lineTo(halfEdge.b.x, halfEdge.b.y);
+    //   this.context.stroke();
+    // }
 
-    // this.context.putImageData(this.boidSystem.imageData, 0, 0);
+    this.context.putImageData(this.boidSystem.imageData, 0, 0);
   }
 }
 

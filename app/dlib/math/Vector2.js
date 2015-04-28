@@ -11,6 +11,11 @@ export default class Vector2 {
     return this;
   }
 
+  copy (vector2) {
+    this.x = vector2.x;
+    this.y = vector2.y;
+  }
+
   add (vector2) {
     this.x += vector2.x;
     this.y += vector2.y;

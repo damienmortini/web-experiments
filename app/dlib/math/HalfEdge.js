@@ -1,4 +1,4 @@
-import Edge from "../math/Edge";
+import Edge from "./Edge";
 
 class TwinEdge extends Edge {
   constructor (a, b) {
