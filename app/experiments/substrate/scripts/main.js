@@ -14,7 +14,23 @@ class Main {
     // let normalsCanvas = document.querySelector("canvas#normals");
     // let depthCanvas = document.querySelector("canvas#depth");
 
-    this.boidSystem = new BoidSystem(this.canvas.width, this.canvas.height, 3, 0.002);
+    this.boidSystem = new BoidSystem(this.canvas.width, this.canvas.height, 3, 0);
+
+    setTimeout(() =>{
+      this.boidSystem.spawnProbabilityRatio = 1;
+    }, 1000);
+
+    setTimeout(() =>{
+      this.boidSystem.spawnProbabilityRatio = 1;
+    }, 2000);
+
+    setTimeout(() =>{
+      this.boidSystem.spawnProbabilityRatio = 1;
+    }, 3000);
+
+    setTimeout(() =>{
+      this.boidSystem.spawnProbabilityRatio = 1;
+    }, 4000);
 
     this.pointer = {
       previousX: 0,
@@ -33,7 +49,7 @@ class Main {
 
     this.boidSystem.add(this.canvas.width * 0.55, this.canvas.height * 0.5, 0);
     // this.boidSystem.add(this.canvas.width * 0.6, this.canvas.height * 0.4, Math.PI * .5);
-    this.boidSystem.add(this.canvas.width * 0.6, this.canvas.height * 0.6, -Math.PI * .5);
+    // this.boidSystem.add(this.canvas.width * 0.6, this.canvas.height * 0.6, -Math.PI * .5);
   }
 
   onCanvasPointerDown () {
@@ -74,24 +90,73 @@ class Main {
     for (let i = 0; i < this.boidSystem.edges.length; i++) {
       let edge = this.boidSystem.edges[i];
       this.context.strokeStyle = `hsl(${i * 50 % 360}, 100%, 50%)`;
+
       this.context.beginPath();
+      // this.context.setLineDash([2, 2]);
+
+      let p1;
+      let p2;
+
+      // p1 = edge.getCenter();
+
+      // this.context.beginPath();
+      // this.context.arc(p1.x, p1.y, 5, 0, Math.PI * 2);
+
+      p1 = edge.getPointFromRatio(0);
+      p2 = edge.next.getPointFromRatio(1);
+      // p1 = edge.getPointFromRatio(.9);
+      // p2 = edge.next.getPointFromRatio(.1);
+
+      this.context.moveTo(p1.x, p1.y);
+      this.context.quadraticCurveTo(edge.next.a.x, edge.next.a.y, p2.x, p2.y);
+
+      p1 = edge.twin.getPointFromRatio(0);
+      p2 = edge.twin.next.getPointFromRatio(1);
+      // p1 = edge.twin.getPointFromRatio(.9);
+      // p2 = edge.twin.next.getPointFromRatio(.1);
+
+      this.context.moveTo(p1.x, p1.y);
+      this.context.quadraticCurveTo(edge.twin.next.a.x, edge.twin.next.a.y, p2.x, p2.y);
+
+      this.context.stroke();
+
+      // let offsetX = 0;
+      // let offsetY = 0;
+      // if (edge.next.boid) {
+      //   offsetX += edge.next.boid.velocity.x;
+      //   offsetY += edge.next.boid.velocity.y;
+      // }
+      // else {
+      //   offsetX -= edge.next.twin.boid.velocity.x;
+      //   offsetY -= edge.next.twin.boid.velocity.y;
+      // }
+      // this.context.beginPath();
+      // this.context.arc(edge.b.x + offsetX * 5, edge.b.y + offsetY * 5, 2, 0, Math.PI * 2);
+      // this.context.stroke();
+      //
+      // offsetX = 0;
+      // offsetY = 0;
+      // if (edge.twin.next.boid) {
+      //   offsetX += edge.twin.next.boid.velocity.x;
+      //   offsetY += edge.twin.next.boid.velocity.y;
+      // }
+      // else {
+      //   offsetX -= edge.twin.next.twin.boid.velocity.x;
+      //   offsetY -= edge.twin.next.twin.boid.velocity.y;
+      // }
+      // this.context.beginPath();
+      // this.context.arc(edge.a.x + offsetX * 5, edge.a.y + offsetY * 5, 2, 0, Math.PI * 2);
+      // this.context.stroke();
+    }
+
+    for (let i = 0; i < this.boidSystem.edges.length; i++) {
+      let edge = this.boidSystem.edges[i];
+      this.context.strokeStyle = `hsl(${i * 50 % 360}, 100%, 50%)`;
+      // this.context.setLineDash([]);
+      this.context.beginPath();
+      this.context.setLineDash([]);
       this.context.moveTo(edge.a.x, edge.a.y);
       this.context.lineTo(edge.b.x, edge.b.y);
-      // let edgeLength = Math.sqrt( this.x * this.x + this.y * this.y );
-      // let edgeLength = Math.sqrt( this.x * this.x + this.y * this.y );
-      let offsetX = -edge.boid.velocity.x;
-      let offsetY = -edge.boid.velocity.y;
-      if (edge.next.boid) {
-        offsetX += edge.next.boid.velocity.x;
-        offsetY += edge.next.boid.velocity.y;
-      }
-      else {
-        offsetX -= edge.next.twin.boid.velocity.x;
-        offsetY -= edge.next.twin.boid.velocity.y;
-      }
-      this.context.stroke();
-      this.context.beginPath();
-      this.context.arc(edge.b.x + offsetX * 5, edge.b.y + offsetY * 5, 2, 0, Math.PI * 2);
       this.context.stroke();
     }
 

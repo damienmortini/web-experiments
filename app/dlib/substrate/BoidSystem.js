@@ -60,8 +60,9 @@ export default class BoidSystem {
         // Add new edge
         if(Math.random() < this.spawnProbabilityRatio) {
           let velocityAngle = Math.pow(Math.random(), 100) * (Math.random() > 0.5 ? 1 : -1) + edge.boid.velocityAngle + Math.PI * 0.5 * (Math.random() > 0.5 ? 1 : -1);
-          this.splitEdge(edge, edgeId);
-          this.add(edge.b.x, edge.b.y, velocityAngle, 0, edge.boid.life);
+          let newEdge = this.add(edge.b.x, edge.b.y, velocityAngle, 0, edge.boid.life);
+          this.splitEdge(newEdge, edgeId, true);
+          this.spawnProbabilityRatio = 0;
         }
       }
     }
@@ -71,29 +72,60 @@ export default class BoidSystem {
     let oldEdge = this.edges[edgeId - 1];
     let newEdge = this.add(oldEdge.boid.x, oldEdge.boid.y, oldEdge.boid.velocityAngle, oldEdge.boid.offsetAngle, oldEdge.boid.life);
 
-    let isTwinEdge = edge.boid.velocityAngle - oldEdge.boid.velocityAngle > 0;
-
-    if (isTwinEdge) {
+    if (oldEdge.boid.isDead) {
       newEdge.boid.kill();
-      newEdge.a.copy(oldEdge.a);
-      newEdge.b.copy(edge.b);
-      oldEdge.a.copy(edge.b);
-      oldEdge.twin.next = edge.twin;
-      edge.next = newEdge.twin;
     }
     else {
-      if (oldEdge.boid.isDead) {
-        newEdge.boid.kill();
-      }
       oldEdge.boid.kill();
-      newEdge.a.copy(edge.b);
-      oldEdge.b.copy(edge.b);
-      oldEdge.next = edge.twin;
-      edge.next = newEdge;
+    }
+    newEdge.a.copy(edge.b);
+    oldEdge.b.copy(edge.b);
+
+    // Detect if spawned or collided
+    let spawnState = !edge.boid.isDead;
+
+    let isMainEdge = edge.boid.velocityAngle - oldEdge.boid.velocityAngle < 0;
+    if(spawnState) {
+      isMainEdge = !isMainEdge;
+    }
+    // console.log(isMainEdge);
+    //
+    if (isMainEdge) {
+      // if ()
+      console.log('main');
+      edge.twin.next = newEdge;
+      oldEdge.next = edge;
+      newEdge.twin.next = oldEdge;
+    }
+    else {
+      console.log('twin');
+      edge.twin.next = oldEdge.twin;
+      oldEdge.next = newEdge;
+      newEdge.twin.next = edge;
     }
 
+
+    // if (isMainEdge) {
+    //   if (oldEdge.boid.isDead) {
+    //     newEdge.boid.kill();
+    //   }
+    //   oldEdge.boid.kill();
+    //   newEdge.a.copy(edge.b);
+    //   oldEdge.b.copy(edge.b);
+    //   oldEdge.next = edge.twin;
+    //   edge.next = newEdge;
+    // }
+    // else {
+    //   newEdge.boid.kill();
+    //   newEdge.a.copy(oldEdge.a);
+    //   newEdge.b.copy(edge.b);
+    //   oldEdge.a.copy(edge.b);
+    //   oldEdge.twin.next = edge.twin;
+    //   edge.next = newEdge.twin;
+    // }
+
     let sweepBoid = new Boid(edge.b.x, edge.b.y, oldEdge.boid.velocityAngle, oldEdge.boid.offsetAngle);
-    if (isTwinEdge) {
+    if (!isMainEdge) {
       sweepBoid.velocityAngle += Math.PI;
     }
     let sweepPosition = Math.floor(sweepBoid.x) + this.width * Math.floor(sweepBoid.y);

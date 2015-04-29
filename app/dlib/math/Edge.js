@@ -6,4 +6,12 @@ export default class Edge {
     this.b = b;
     return this;
   }
+
+  getCenter() {
+    return this.getPointFromRatio(.5);
+  }
+
+  getPointFromRatio(ratio) {
+    return new Vector2(this.a.x + (this.b.x - this.a.x) * ratio, this.a.y + (this.b.y - this.a.y) * ratio);
+  }
 }
