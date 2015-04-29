@@ -4,6 +4,7 @@ class TwinEdge extends Edge {
   constructor (a, b) {
     super(a, b);
     this.next = null;
+    this.previous = null;
     this.twin = null;
   }
 }
@@ -15,9 +16,12 @@ export default class HalfEdge extends TwinEdge {
     this.twin = new TwinEdge(b, a);
 
     this.next = this.twin;
+    this.previous = this.twin;
+
+    this.twin.next = this;
+    this.twin.previous = this;
 
     this.twin.twin = this;
-    this.twin.next = this;
 
     return this;
   }

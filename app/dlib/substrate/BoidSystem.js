@@ -23,6 +23,7 @@ export default class BoidSystem {
     let boid = new Boid(x, y, velocityAngle, offsetAngle, life);
     let edge = new SubstrateEdge(new Vector2(boid.x, boid.y), new Vector2(boid.x, boid.y), boid);
     this.edges.push(edge);
+    edge.id = this.edges.length;
     return edge;
   }
 
@@ -70,6 +71,12 @@ export default class BoidSystem {
 
   splitEdge (edge, edgeId) {
     let oldEdge = this.edges[edgeId - 1];
+
+    let isMainEdge = edge.boid.velocityAngle - oldEdge.boid.velocityAngle < 0;
+
+    let sweepBoid = new Boid(edge.b.x, edge.b.y, oldEdge.boid.velocityAngle, oldEdge.boid.offsetAngle);
+    sweepBoid.update();
+
     let newEdge = this.add(oldEdge.boid.x, oldEdge.boid.y, oldEdge.boid.velocityAngle, oldEdge.boid.offsetAngle, oldEdge.boid.life);
 
     if (oldEdge.boid.isDead) {
@@ -78,30 +85,47 @@ export default class BoidSystem {
     else {
       oldEdge.boid.kill();
     }
-    newEdge.a.copy(edge.b);
+    newEdge.a.copy(sweepBoid);
     oldEdge.b.copy(edge.b);
 
     // Detect if spawned or collided
-    let spawnState = !edge.boid.isDead;
+    let spawned = !edge.boid.isDead;
 
-    let isMainEdge = edge.boid.velocityAngle - oldEdge.boid.velocityAngle < 0;
-    if(spawnState) {
+    if(spawned) {
       isMainEdge = !isMainEdge;
     }
-    // console.log(isMainEdge);
-    //
+
+
+    if (oldEdge.next !== oldEdge.twin) {
+      newEdge.next.twin.next.twin.next = newEdge.twin;
+    }
+    newEdge.next = oldEdge.next;
+
     if (isMainEdge) {
-      // if ()
-      console.log('main');
-      edge.twin.next = newEdge;
-      oldEdge.next = edge;
       newEdge.twin.next = oldEdge;
+      if (spawned) {
+        console.log('main spawned');
+        edge.twin.next = newEdge;
+        oldEdge.next = edge;
+      }
+      else {
+        console.log('main collided');
+        edge.next = newEdge;
+        oldEdge.next = edge.twin;
+      }
     }
     else {
-      console.log('twin');
-      edge.twin.next = oldEdge.twin;
       oldEdge.next = newEdge;
-      newEdge.twin.next = edge;
+      if (spawned) {
+        console.log('twin spawned');
+        newEdge.twin.next = edge;
+        edge.twin.next = oldEdge.twin;
+      }
+      else {
+        console.log('twin collided');
+        edge.next = oldEdge.twin;
+        newEdge.twin.next = edge.twin;
+      }
     }
 
 
@@ -124,10 +148,6 @@ export default class BoidSystem {
     //   edge.next = newEdge.twin;
     // }
 
-    let sweepBoid = new Boid(edge.b.x, edge.b.y, oldEdge.boid.velocityAngle, oldEdge.boid.offsetAngle);
-    if (!isMainEdge) {
-      sweepBoid.velocityAngle += Math.PI;
-    }
     let sweepPosition = Math.floor(sweepBoid.x) + this.width * Math.floor(sweepBoid.y);
     while (this.data[Math.floor(sweepBoid.x) + this.width * Math.floor(sweepBoid.y)] === edgeId) {
       sweepBoid.update();

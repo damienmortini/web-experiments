@@ -18,7 +18,7 @@ class Main {
 
     setTimeout(() =>{
       this.boidSystem.spawnProbabilityRatio = 1;
-    }, 1000);
+    }, 1800);
 
     setTimeout(() =>{
       this.boidSystem.spawnProbabilityRatio = 1;
@@ -48,8 +48,9 @@ class Main {
     this.update();
 
     this.boidSystem.add(this.canvas.width * 0.55, this.canvas.height * 0.5, 0);
-    // this.boidSystem.add(this.canvas.width * 0.6, this.canvas.height * 0.4, Math.PI * .5);
-    // this.boidSystem.add(this.canvas.width * 0.6, this.canvas.height * 0.6, -Math.PI * .5);
+    this.boidSystem.add(this.canvas.width * 0.62, this.canvas.height * 0.3, Math.PI * .5);
+    this.boidSystem.add(this.canvas.width * 0.6, this.canvas.height * 0.6, -Math.PI * .5);
+    this.boidSystem.add(this.canvas.width * 0.7, this.canvas.height * 0.6, -Math.PI * .5);
   }
 
   onCanvasPointerDown () {
@@ -87,12 +88,27 @@ class Main {
 
     this.boidSystem.update();
 
+    this.context.putImageData(this.boidSystem.imageData, 0, 0);
+
     for (let i = 0; i < this.boidSystem.edges.length; i++) {
       let edge = this.boidSystem.edges[i];
-      this.context.strokeStyle = `hsl(${i * 50 % 360}, 100%, 50%)`;
+
+      let moduloId = edge.id % 7;
+      let r = (moduloId === 1 || moduloId === 4 || moduloId === 6) ? 255 : 0;
+      let g = (moduloId === 2 || moduloId === 4 || moduloId === 5) ? 255 : 0;
+      let b = (moduloId === 3 || moduloId === 5 || moduloId === 6) ? 255 : 0;
+
+      this.context.strokeStyle = `rgb(${r}, ${g}, ${b})`;
+      // this.context.globalAlpha = .5;
+
+      // this.context.beginPath();
+      // this.context.setLineDash([]);
+      // this.context.moveTo(edge.a.x, edge.a.y);
+      // this.context.lineTo(edge.b.x, edge.b.y);
+      // this.context.stroke();
 
       this.context.beginPath();
-      // this.context.setLineDash([2, 2]);
+      this.context.setLineDash([2, 8]);
 
       let p1;
       let p2;
@@ -102,18 +118,18 @@ class Main {
       // this.context.beginPath();
       // this.context.arc(p1.x, p1.y, 5, 0, Math.PI * 2);
 
-      p1 = edge.getPointFromRatio(0);
-      p2 = edge.next.getPointFromRatio(1);
-      // p1 = edge.getPointFromRatio(.9);
-      // p2 = edge.next.getPointFromRatio(.1);
+      // p1 = edge.getPointFromRatio(0);
+      // p2 = edge.next.getPointFromRatio(1);
+      p1 = edge.getPointFromRatio(.6);
+      p2 = edge.next.getPointFromRatio(.4);
 
       this.context.moveTo(p1.x, p1.y);
       this.context.quadraticCurveTo(edge.next.a.x, edge.next.a.y, p2.x, p2.y);
 
-      p1 = edge.twin.getPointFromRatio(0);
-      p2 = edge.twin.next.getPointFromRatio(1);
-      // p1 = edge.twin.getPointFromRatio(.9);
-      // p2 = edge.twin.next.getPointFromRatio(.1);
+      // p1 = edge.twin.getPointFromRatio(0);
+      // p2 = edge.twin.next.getPointFromRatio(1);
+      p1 = edge.twin.getPointFromRatio(.5);
+      p2 = edge.twin.next.getPointFromRatio(.5);
 
       this.context.moveTo(p1.x, p1.y);
       this.context.quadraticCurveTo(edge.twin.next.a.x, edge.twin.next.a.y, p2.x, p2.y);
@@ -144,23 +160,11 @@ class Main {
       //   offsetX -= edge.twin.next.twin.boid.velocity.x;
       //   offsetY -= edge.twin.next.twin.boid.velocity.y;
       // }
-      // this.context.beginPath();
-      // this.context.arc(edge.a.x + offsetX * 5, edge.a.y + offsetY * 5, 2, 0, Math.PI * 2);
-      // this.context.stroke();
-    }
-
-    for (let i = 0; i < this.boidSystem.edges.length; i++) {
-      let edge = this.boidSystem.edges[i];
-      this.context.strokeStyle = `hsl(${i * 50 % 360}, 100%, 50%)`;
-      // this.context.setLineDash([]);
-      this.context.beginPath();
       this.context.setLineDash([]);
-      this.context.moveTo(edge.a.x, edge.a.y);
-      this.context.lineTo(edge.b.x, edge.b.y);
+      this.context.beginPath();
+      this.context.arc(edge.b.x, edge.b.y, 2, 0, Math.PI * 2);
       this.context.stroke();
     }
-
-    // this.context.putImageData(this.boidSystem.imageData, 0, 0);
   }
 }
 
