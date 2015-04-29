@@ -68,17 +68,34 @@ export default class BoidSystem {
   }
 
   splitEdge (edge, edgeId) {
-    let collidedEdge = this.edges[edgeId - 1];
-    collidedEdge.b.copy(edge.b);
+    let oldEdge = this.edges[edgeId - 1];
+    let newEdge = this.add(oldEdge.boid.x, oldEdge.boid.y, oldEdge.boid.velocityAngle, oldEdge.boid.offsetAngle, oldEdge.boid.life);
 
-    let newEdge = this.add(collidedEdge.boid.x, collidedEdge.boid.y, collidedEdge.boid.velocityAngle, collidedEdge.boid.offsetAngle, collidedEdge.boid.life);
-    if (collidedEdge.boid.isDead) {
+    let isTwinEdge = edge.boid.velocityAngle - oldEdge.boid.velocityAngle > 0;
+
+    if (isTwinEdge) {
       newEdge.boid.kill();
+      newEdge.a.copy(oldEdge.a);
+      newEdge.b.copy(edge.b);
+      oldEdge.a.copy(edge.b);
+      oldEdge.twin.next = edge.twin;
+      edge.next = newEdge.twin;
     }
-    collidedEdge.boid.kill();
-    newEdge.a.copy(edge.b);
+    else {
+      if (oldEdge.boid.isDead) {
+        newEdge.boid.kill();
+      }
+      oldEdge.boid.kill();
+      newEdge.a.copy(edge.b);
+      oldEdge.b.copy(edge.b);
+      oldEdge.next = edge.twin;
+      edge.next = newEdge;
+    }
 
-    let sweepBoid = new Boid(edge.b.x, edge.b.y, collidedEdge.boid.velocityAngle, collidedEdge.boid.offsetAngle);
+    let sweepBoid = new Boid(edge.b.x, edge.b.y, oldEdge.boid.velocityAngle, oldEdge.boid.offsetAngle);
+    if (isTwinEdge) {
+      sweepBoid.velocityAngle += Math.PI;
+    }
     let sweepPosition = Math.floor(sweepBoid.x) + this.width * Math.floor(sweepBoid.y);
     while (this.data[Math.floor(sweepBoid.x) + this.width * Math.floor(sweepBoid.y)] === edgeId) {
       sweepBoid.update();
@@ -92,6 +109,10 @@ export default class BoidSystem {
 
   setDebugColor (position) {
     let id = this.data[position];
+    // let edge = this.edges[id - 1];
+    // this.imageData.data[position * 4] = Math.round(((edge.boid.velocity.x + 1) / 2) * 255);
+    // this.imageData.data[position * 4 + 1] = Math.round(((edge.boid.velocity.y + 1) / 2) * 255);
+    // this.imageData.data[position * 4 + 2] = 255;
     let moduloId = id % 7;
     this.imageData.data[position * 4] = (moduloId === 1 || moduloId === 4 || moduloId === 6) ? 255 : 0;
     this.imageData.data[position * 4 + 1] = (moduloId === 2 || moduloId === 4 || moduloId === 5) ? 255 : 0;

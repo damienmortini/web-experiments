@@ -14,7 +14,7 @@ class Main {
     // let normalsCanvas = document.querySelector("canvas#normals");
     // let depthCanvas = document.querySelector("canvas#depth");
 
-    this.boidSystem = new BoidSystem(this.canvas.width, this.canvas.height, 10, 0.05);
+    this.boidSystem = new BoidSystem(this.canvas.width, this.canvas.height, 3, 0.002);
 
     this.pointer = {
       previousX: 0,
@@ -32,6 +32,7 @@ class Main {
     this.update();
 
     this.boidSystem.add(this.canvas.width * 0.55, this.canvas.height * 0.5, 0);
+    // this.boidSystem.add(this.canvas.width * 0.6, this.canvas.height * 0.4, Math.PI * .5);
     this.boidSystem.add(this.canvas.width * 0.6, this.canvas.height * 0.6, -Math.PI * .5);
   }
 
@@ -70,16 +71,31 @@ class Main {
 
     this.boidSystem.update();
 
-    // for (let i = 0; i < this.boidSystem.halfEdges.length; i++) {
-    //   let halfEdge = this.boidSystem.halfEdges[i];
-    //   this.context.strokeStyle = `hsl(${i * 50 % 360}, 100%, 50%)`;
-    //   this.context.beginPath();
-    //   this.context.moveTo(halfEdge.a.x, halfEdge.a.y);
-    //   this.context.lineTo(halfEdge.b.x, halfEdge.b.y);
-    //   this.context.stroke();
-    // }
+    for (let i = 0; i < this.boidSystem.edges.length; i++) {
+      let edge = this.boidSystem.edges[i];
+      this.context.strokeStyle = `hsl(${i * 50 % 360}, 100%, 50%)`;
+      this.context.beginPath();
+      this.context.moveTo(edge.a.x, edge.a.y);
+      this.context.lineTo(edge.b.x, edge.b.y);
+      // let edgeLength = Math.sqrt( this.x * this.x + this.y * this.y );
+      // let edgeLength = Math.sqrt( this.x * this.x + this.y * this.y );
+      let offsetX = -edge.boid.velocity.x;
+      let offsetY = -edge.boid.velocity.y;
+      if (edge.next.boid) {
+        offsetX += edge.next.boid.velocity.x;
+        offsetY += edge.next.boid.velocity.y;
+      }
+      else {
+        offsetX -= edge.next.twin.boid.velocity.x;
+        offsetY -= edge.next.twin.boid.velocity.y;
+      }
+      this.context.stroke();
+      this.context.beginPath();
+      this.context.arc(edge.b.x + offsetX * 5, edge.b.y + offsetY * 5, 2, 0, Math.PI * 2);
+      this.context.stroke();
+    }
 
-    this.context.putImageData(this.boidSystem.imageData, 0, 0);
+    // this.context.putImageData(this.boidSystem.imageData, 0, 0);
   }
 }
 
