@@ -15,6 +15,9 @@
       canvas#main {
         z-index: 2;
       }
+      canvas#debug {
+        z-index: 3;
+      }
       canvas#depth {
         z-index: 1;
         opacity: .5;
@@ -23,6 +26,7 @@
   </head>
   <body>
     <canvas id="main"></canvas>
+    <canvas id="debug"></canvas>
     <canvas id="depth"></canvas>
     <canvas id="normals"></canvas>
     <script src="../../vendors/common.js"></script>

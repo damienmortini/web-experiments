@@ -5,9 +5,10 @@ import SubstrateEdge from "./SubstrateEdge";
 const DEBUG = true;
 
 export default class BoidSystem {
-  constructor(width, height, speed = 1, spawnProbabilityRatio = 0.1) {
+  constructor(width, height, {speed = 1, spawnProbabilityRatio = 0.1, polygonMatchMethod = () => {}}) {
 
     this.edges = [];
+    this.polygonMatchMethod = polygonMatchMethod;
 
     this.speed = speed;
     this.spawnProbabilityRatio = spawnProbabilityRatio;
@@ -63,7 +64,7 @@ export default class BoidSystem {
           let velocityAngle = Math.pow(Math.random(), 100) * (Math.random() > 0.5 ? 1 : -1) + edge.boid.velocityAngle + Math.PI * 0.5 * (Math.random() > 0.5 ? 1 : -1);
           let newEdge = this.add(edge.b.x, edge.b.y, velocityAngle, 0, edge.boid.life);
           this.splitEdge(newEdge, edgeId, true);
-          this.spawnProbabilityRatio = 0;
+          // this.spawnProbabilityRatio = 0;
         }
       }
     }
@@ -95,7 +96,6 @@ export default class BoidSystem {
       isMainEdge = !isMainEdge;
     }
 
-
     if (oldEdge.next !== oldEdge.twin) {
       newEdge.next = oldEdge.next;
       newEdge.next.twin.next.twin.next = newEdge.twin;
@@ -104,12 +104,12 @@ export default class BoidSystem {
     if (isMainEdge) {
       newEdge.twin.next = oldEdge;
       if (spawned) {
-        console.log('main spawned');
+        // console.log("main spawned");
         edge.twin.next = newEdge;
         oldEdge.next = edge;
       }
       else {
-        console.log('main collided');
+        // console.log("main collided");
         edge.next = newEdge;
         oldEdge.next = edge.twin;
       }
@@ -117,36 +117,16 @@ export default class BoidSystem {
     else {
       oldEdge.next = newEdge;
       if (spawned) {
-        console.log('twin spawned');
+        // console.log("twin spawned");
         newEdge.twin.next = edge;
         edge.twin.next = oldEdge.twin;
       }
       else {
-        console.log('twin collided');
+        // console.log("twin collided");
         edge.next = oldEdge.twin;
         newEdge.twin.next = edge.twin;
       }
     }
-
-
-    // if (isMainEdge) {
-    //   if (oldEdge.boid.isDead) {
-    //     newEdge.boid.kill();
-    //   }
-    //   oldEdge.boid.kill();
-    //   newEdge.a.copy(edge.b);
-    //   oldEdge.b.copy(edge.b);
-    //   oldEdge.next = edge.twin;
-    //   edge.next = newEdge;
-    // }
-    // else {
-    //   newEdge.boid.kill();
-    //   newEdge.a.copy(oldEdge.a);
-    //   newEdge.b.copy(edge.b);
-    //   oldEdge.a.copy(edge.b);
-    //   oldEdge.twin.next = edge.twin;
-    //   edge.next = newEdge.twin;
-    // }
 
     let sweepPosition = Math.floor(sweepBoid.x) + this.width * Math.floor(sweepBoid.y);
     while (this.data[Math.floor(sweepBoid.x) + this.width * Math.floor(sweepBoid.y)] === edgeId) {
@@ -156,6 +136,21 @@ export default class BoidSystem {
         this.setDebugColor(sweepPosition);
       }
       sweepPosition = Math.floor(sweepBoid.x) + this.width * Math.floor(sweepBoid.y);
+    }
+
+    let nextEdge = edge.next;
+    let polygonArray = [edge.b.x, edge.b.y];
+    for (let i = 0; i < 100; i++) {
+      if (nextEdge.next === nextEdge.twin) {
+        break;
+      }
+      polygonArray.push(nextEdge.b.x);
+      polygonArray.push(nextEdge.b.y);
+      if (nextEdge === edge) {
+        this.polygonMatchMethod(polygonArray);
+        break;
+      }
+      nextEdge = nextEdge.next;
     }
   }
 
