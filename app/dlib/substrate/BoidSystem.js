@@ -97,9 +97,9 @@ export default class BoidSystem {
 
 
     if (oldEdge.next !== oldEdge.twin) {
+      newEdge.next = oldEdge.next;
       newEdge.next.twin.next.twin.next = newEdge.twin;
     }
-    newEdge.next = oldEdge.next;
 
     if (isMainEdge) {
       newEdge.twin.next = oldEdge;
