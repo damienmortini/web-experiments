@@ -16,7 +16,7 @@ export default class Boid extends Particle {
   }
 
   set velocityAngle (value) {
-    this.velocity.set(Math.cos(value), Math.sin(value));
+    this.velocity.set(Math.cos(value), -Math.sin(value));
     this._velocityAngle = value;
     return value;
   }

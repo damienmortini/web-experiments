@@ -14,10 +14,20 @@ export default class Vector2 {
   copy (vector2) {
     this.x = vector2.x;
     this.y = vector2.y;
+    return this;
   }
 
   add (vector2) {
     this.x += vector2.x;
     this.y += vector2.y;
+    return this;
+  }
+
+  dot (vector2) {
+    return this.x * vector2.x + this.y * vector2.y;
+  }
+
+  angleTo (vector2) {
+    return Math.atan2( this.x * vector2.y - this.y * vector2.x, this.x * vector2.x + this.y * vector2.y );
   }
 }
