@@ -1,16 +1,15 @@
 import Boid from "./Boid";
 import Vector2 from "../math/Vector2";
-import Polygon from "../math/Polygon";
+import SubstratePolygon from "./SubstratePolygon";
 import SubstrateEdge from "./SubstrateEdge";
 
-const DEBUG = true;
+const DEBUG = false;
 
 export default class SubstrateSystem {
-  constructor(width, height, {speed = 1, spawnProbabilityRatio = 0.1, spawnOptions = {}, polygonMatchMethod = () => {}}) {
+  constructor(width, height, {speed = 1, spawnProbabilityRatio = 0.1, spawnOptions = {}}) {
 
     this.edges = [];
     this.polygons = [];
-    this.polygonMatchMethod = polygonMatchMethod;
 
     this.speed = speed;
     this.spawnProbabilityRatio = spawnProbabilityRatio;
@@ -20,22 +19,20 @@ export default class SubstrateSystem {
     this.height = height;
 
     this.data = new Uint32Array(this.width * this.height);
-    this.imageData = new ImageData(this.width, this.height);
   }
 
   addBoid (x, y, velocityAngle, offsetAngle, life) {
     let boid = new Boid(x, y, velocityAngle, offsetAngle, life);
     let edge = new SubstrateEdge(new Vector2(boid.x, boid.y), new Vector2(boid.x, boid.y), boid);
+    edge.id = this.edges.length ? this.edges[this.edges.length - 1].id + 1 : 0;
     this.edges.push(edge);
-    edge.id = this.edges.length;
     return edge;
   }
 
   addPolygon (vertices) {
-    let polygon = new Polygon(vertices);
+    let polygon = new SubstratePolygon(vertices);
+    polygon.id = this.polygons.length ? this.polygons[this.polygons.length - 1].id + 1 : 0;
     this.polygons.push(polygon);
-    // // TODO: Extend instead of passing function
-    this.polygonMatchMethod(polygon);
     return false;
   }
 
@@ -183,21 +180,5 @@ export default class SubstrateSystem {
       }
       nextEdge = nextEdge.next;
     }
-  }
-
-  setDebugColor (position) {
-    let debugColor = this.getDebugColor(this.data[position]);
-    this.imageData.data[position * 4] = debugColor.r;
-    this.imageData.data[position * 4 + 1] = debugColor.g;
-    this.imageData.data[position * 4 + 2] = debugColor.b;
-    this.imageData.data[position * 4 + 3] = 255;
-  }
-
-  getDebugColor (edgeId) {
-    let moduloId = edgeId % 6;
-    let r = (moduloId === 1 || moduloId === 4 || moduloId === 6) ? 255 : 0;
-    let g = (moduloId === 2 || moduloId === 4 || moduloId === 5) ? 220 : 0;
-    let b = (moduloId === 3 || moduloId === 5 || moduloId === 6) ? 255 : 0;
-    return {r, g, b};
   }
 }
