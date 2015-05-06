@@ -1,5 +1,5 @@
 // import BoidSystem3D from "dlib/substrate/BoidSystem3D";
-import BoidSystem from "dlib/substrate/BoidSystem";
+import SubstrateSystem from "dlib/substrate/SubstrateSystem";
 
 class Main {
   constructor() {
@@ -24,7 +24,7 @@ class Main {
     // let normalsCanvas = document.querySelector("canvas#normals");
     // let depthCanvas = document.querySelector("canvas#depth");
 
-    this.boidSystem = new BoidSystem(this.canvas.width, this.canvas.height, {
+    this.substrateSystem = new SubstrateSystem(this.canvas.width, this.canvas.height, {
       speed: 10,
       spawnProbabilityRatio: 0.05,
       // spawnProbabilityRatio: 0,
@@ -33,12 +33,12 @@ class Main {
 
     // for(let i = 0; i < 500; i++) {
     //   setTimeout(() =>{
-    //     this.boidSystem.spawnOptions = {
+    //     this.substrateSystem.spawnOptions = {
     //       velocityAngle: Math.PI * .30 * (i % 2 ? -1 : 1)
     //       // velocityAngle: Math.PI * .5 * (i % 2 ? -1 : 1)
     //     }
-    //     this.boidSystem.spawnProbabilityRatio = 1;
-    //     this.boidSystem.update();
+    //     this.substrateSystem.spawnProbabilityRatio = 1;
+    //     this.substrateSystem.update();
     //   }, 500 + (i + 1) * 100);
     // }
 
@@ -57,15 +57,15 @@ class Main {
 
     this.update();
 
-    this.boidSystem.add(this.canvas.width * 0.5, this.canvas.height * 0.5, Math.PI);
-    // this.boidSystem.add(this.canvas.width * 0.62, this.canvas.height * 0.3, -Math.PI * .5);
-    // this.boidSystem.add(this.canvas.width * 0.48, this.canvas.height * 0.45, -Math.PI * .25);
-    // this.boidSystem.add(this.canvas.width * 0.47, this.canvas.height * 0.55, Math.PI * .25);
-    // this.boidSystem.add(this.canvas.width * 0.60, this.canvas.height * 0.57, Math.PI * .75);
-    // this.boidSystem.add(this.canvas.width * 0.60, this.canvas.height * 0.42, -Math.PI * .75);
-    // this.boidSystem.add(this.canvas.width * 0.5, this.canvas.height * 0.5, 0);
-    // this.boidSystem.add(this.canvas.width * 0.6, this.canvas.height * 0.6, Math.PI * .5);
-    // this.boidSystem.add(this.canvas.width * 0.7, this.canvas.height * 0.6, Math.PI * .5);
+    this.substrateSystem.addBoid(this.canvas.width * 0.5, this.canvas.height * 0.5, Math.PI);
+    // this.substrateSystem.addBoid(this.canvas.width * 0.62, this.canvas.height * 0.3, -Math.PI * .5);
+    // this.substrateSystem.addBoid(this.canvas.width * 0.48, this.canvas.height * 0.45, -Math.PI * .25);
+    // this.substrateSystem.addBoid(this.canvas.width * 0.47, this.canvas.height * 0.55, Math.PI * .25);
+    // this.substrateSystem.addBoid(this.canvas.width * 0.60, this.canvas.height * 0.57, Math.PI * .75);
+    // this.substrateSystem.addBoid(this.canvas.width * 0.60, this.canvas.height * 0.42, -Math.PI * .75);
+    // this.substrateSystem.addBoid(this.canvas.width * 0.5, this.canvas.height * 0.5, 0);
+    // this.substrateSystem.addBoid(this.canvas.width * 0.6, this.canvas.height * 0.6, Math.PI * .5);
+    // this.substrateSystem.addBoid(this.canvas.width * 0.7, this.canvas.height * 0.6, Math.PI * .5);
   }
 
   onCanvasPointerDown () {
@@ -83,11 +83,14 @@ class Main {
     this.pointer.down = false;
   }
 
-  drawPolygon (polygonArray) {
+  drawPolygon (polygon) {
     this.bufferContext.fillStyle = `hsl(${360 * Math.random()}, 100%, 75%)`;
     this.bufferContext.beginPath();
-    for (var i = 2; i < polygonArray.length; i += 2) {
-      this.bufferContext.lineTo(polygonArray[i], polygonArray[i + 1]);
+    let vertex = polygon.vertices[0];
+    this.bufferContext.moveTo(vertex.x, vertex.y);
+    for (let i = 1; i < polygon.vertices.length - 1; i++) {
+      vertex = polygon.vertices[i];
+      this.bufferContext.lineTo(vertex.x, vertex.y);
     }
     this.bufferContext.fill();
   }
@@ -101,7 +104,7 @@ class Main {
 
     // if(this.pointer.down) {
       // if(Math.abs(this.pointer.previousX - this.pointer.x) > 0 && Math.abs(this.pointer.previousY - this.pointer.y) > 0) {
-      //   this.boidSystem.add(
+      //   this.substrateSystem.addBoid(
       //     this.pointer.x,
       //     this.pointer.y,
       //     velocityAngle,
@@ -111,9 +114,9 @@ class Main {
       // }
     // }
 
-    this.boidSystem.update();
+    this.substrateSystem.update();
 
-    this.debugContext.putImageData(this.boidSystem.imageData, 0, 0);
+    this.debugContext.putImageData(this.substrateSystem.imageData, 0, 0);
 
     // this.drawDebug();
 
@@ -123,10 +126,10 @@ class Main {
   }
 
   drawDebug () {
-    for (let i = 0; i < this.boidSystem.edges.length; i++) {
-      let edge = this.boidSystem.edges[i];
+    for (let i = 0; i < this.substrateSystem.edges.length; i++) {
+      let edge = this.substrateSystem.edges[i];
 
-      let debugColor = this.boidSystem.getDebugColor(edge.id);
+      let debugColor = this.substrateSystem.getDebugColor(edge.id);
 
       this.debugContext.strokeStyle = `rgb(${debugColor.r}, ${debugColor.g}, ${debugColor.b})`;
       // this.debugContext.globalAlpha = .5;

@@ -1,13 +1,15 @@
 import Boid from "./Boid";
 import Vector2 from "../math/Vector2";
+import Polygon from "../math/Polygon";
 import SubstrateEdge from "./SubstrateEdge";
 
 const DEBUG = true;
 
-export default class BoidSystem {
+export default class SubstrateSystem {
   constructor(width, height, {speed = 1, spawnProbabilityRatio = 0.1, spawnOptions = {}, polygonMatchMethod = () => {}}) {
 
     this.edges = [];
+    this.polygons = [];
     this.polygonMatchMethod = polygonMatchMethod;
 
     this.speed = speed;
@@ -21,12 +23,20 @@ export default class BoidSystem {
     this.imageData = new ImageData(this.width, this.height);
   }
 
-  add (x, y, velocityAngle, offsetAngle, life) {
+  addBoid (x, y, velocityAngle, offsetAngle, life) {
     let boid = new Boid(x, y, velocityAngle, offsetAngle, life);
     let edge = new SubstrateEdge(new Vector2(boid.x, boid.y), new Vector2(boid.x, boid.y), boid);
     this.edges.push(edge);
     edge.id = this.edges.length;
     return edge;
+  }
+
+  addPolygon (vertices) {
+    let polygon = new Polygon(vertices);
+    this.polygons.push(polygon);
+    // // TODO: Extend instead of passing function
+    this.polygonMatchMethod(polygon);
+    return false;
   }
 
   update () {
@@ -69,9 +79,8 @@ export default class BoidSystem {
           else {
             velocityAngle = edge.boid.velocityAngle + this.spawnOptions.velocityAngle;
           }
-          let newEdge = this.add(edge.b.x, edge.b.y, velocityAngle, 0, edge.boid.life);
+          let newEdge = this.addBoid(edge.b.x, edge.b.y, velocityAngle, 0, edge.boid.life);
           this.splitEdge(newEdge, edgeId, true);
-          // this.spawnProbabilityRatio = 0;
         }
       }
     }
@@ -87,7 +96,7 @@ export default class BoidSystem {
     let sweepBoid = new Boid(edge.b.x, edge.b.y, oldEdge.boid.velocityAngle, oldEdge.boid.offsetAngle);
     sweepBoid.update();
 
-    let newEdge = this.add(oldEdge.boid.x, oldEdge.boid.y, oldEdge.boid.velocityAngle, oldEdge.boid.offsetAngle, oldEdge.boid.life);
+    let newEdge = this.addBoid(oldEdge.boid.x, oldEdge.boid.y, oldEdge.boid.velocityAngle, oldEdge.boid.offsetAngle, oldEdge.boid.life);
 
     if (oldEdge.boid.isDead) {
       newEdge.boid.kill();
@@ -148,30 +157,28 @@ export default class BoidSystem {
     }
 
     let nextEdge = edge.next;
-    let polygonArray = [edge.b.x, edge.b.y];
+    let vertices = [new Vector2(edge.b.x, edge.b.y)];
     for (let i = 0; i < 100; i++) {
       if (nextEdge.next === nextEdge.twin) {
         break;
       }
-      polygonArray.push(nextEdge.b.x);
-      polygonArray.push(nextEdge.b.y);
+      vertices.push(new Vector2(nextEdge.b.x, nextEdge.b.y));
       if (nextEdge === edge) {
-        this.polygonMatchMethod(polygonArray);
+        this.addPolygon(vertices);
         break;
       }
       nextEdge = nextEdge.next;
     }
 
     nextEdge = edge.twin.next;
-    polygonArray = [edge.twin.b.x, edge.twin.b.y];
+    vertices = [new Vector2(edge.twin.b.x, edge.twin.b.y)];
     for (let i = 0; i < 100; i++) {
       if (nextEdge.next === nextEdge.twin) {
         break;
       }
-      polygonArray.push(nextEdge.b.x);
-      polygonArray.push(nextEdge.b.y);
+      vertices.push(new Vector2(nextEdge.b.x, nextEdge.b.y));
       if (nextEdge === edge.twin) {
-        this.polygonMatchMethod(polygonArray);
+        this.addPolygon(vertices);
         break;
       }
       nextEdge = nextEdge.next;
