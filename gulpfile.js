@@ -9,12 +9,12 @@ var gutil = require("gulp-util");
 var sourcemaps = require("gulp-sourcemaps");
 var babelify = require("babelify");
 var assign = require("lodash.assign");
+var changed = require('gulp-changed');
 var globby = require("globby");
+var browserSync = require('browser-sync');
+var reload = browserSync.reload;
 
 function startWatchify (entry) {
-
-  console.log(entry);
-
   var customOpts = {
     entries: [entry],
     debug: true
@@ -26,11 +26,12 @@ function startWatchify (entry) {
   function bundle() {
     return b.bundle()
       .on("error", gutil.log.bind(gutil, "Browserify Error"))
-      .pipe(source(entry.replace("/app/", "/dist/")))
+      .pipe(source(entry.replace("/app/", "/")))
       .pipe(buffer())
       .pipe(sourcemaps.init({loadMaps: true}))
       .pipe(sourcemaps.write("./"))
-      .pipe(gulp.dest("."));
+      .pipe(gulp.dest("./dist"))
+      .pipe(reload({stream: true}));
   }
 
   b.on("update", bundle);
@@ -39,23 +40,36 @@ function startWatchify (entry) {
   bundle();
 }
 
+gulp.task("browser-sync", function () {
+  browserSync({
+    notify: false,
+    port: 9000,
+    server: {
+      baseDir: ["dist"]
+    }
+  });
+
+  gulp.watch("./app/**/*", ["copy"]);
+});
+
 gulp.task("copy", function () {
   return gulp.src([
-    "app/experiments/**/*.*",
-    "!app/experiments/**/scripts/*.{js,js.map}"
+    "./app/**/*",
+    "!./app/**/*.{js,js.map}"
   ], {
     dot: true
-  }).pipe(gulp.dest("dist"));
+  })
+  .pipe(changed("./dist"))
+  .pipe(gulp.dest("./dist"))
+  .pipe(reload({stream: true}));
 });
 
 gulp.task("scripts", function () {
-  globby(["app/experiments/**/scripts/main.js"], function(err, entries) {
+  globby(["./app/experiments/**/scripts/main.js"], function(err, entries) {
     if (err) {
       gutil.log(err);
       return;
     }
-
-    gutil.log(entries);
 
     for (var i = 0; i < entries.length; i++) {
       startWatchify(entries[i]);
@@ -63,4 +77,6 @@ gulp.task("scripts", function () {
   });
 });
 
-gulp.task("build", ["scripts"]);
+gulp.task("serve", ["copy", "scripts", "browser-sync"]);
+
+gulp.task("build", ["copy", "scripts"]);
