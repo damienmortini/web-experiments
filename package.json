@@ -1,18 +1,14 @@
 {
   "name": "web-experiments",
   "description": "Some experiments on the Web",
-  "dependencies": {
-    "auto-reload-brunch": "^1.7.8",
-    "babel-brunch": "^5.0.0",
-    "brunch": "^1.7.0",
-    "css-brunch": "^1.7.0",
-    "javascript-brunch": "^1.7.1",
-    "uglify-js-brunch": "^1.7.8"
-  },
+  "dependencies": {},
   "scripts": {
-    "serve": "brunch watch --server",
-    "watch": "brunch watch",
-    "build": "brunch build"
+    "serve": "",
+    "watch": "",
+    "build": "gulp build",
+    "_watchify": "watchify app/experiments/substrate/scripts/main.js -t babelify -o dist/experiments/substrate/scripts/main.js",
+    "_browserify": "browserify app/experiments/substrate/scripts/main.js -t babelify -o dist/experiments/substrate/scripts/main.js",
+    "_mkdirp": "mkdirp dist/experiments/substrate/scripts"
   },
   "repository": {
     "type": "git",
@@ -20,5 +16,19 @@
   },
   "author": "Damien Mortini",
   "homepage": "https://github.com/dmmn/web-experiments",
-  "devDependencies": {}
+  "devDependencies": {
+    "globby": "^2.0.0",
+    "babelify": "^6.0.2",
+    "browser-sync": "^2.7.1",
+    "browserify": "^10.1.1",
+    "browserify-shim": "^3.8.6",
+    "gulp": "^3.8.11",
+    "gulp-sourcemaps": "^1.5.2",
+    "gulp-util": "^3.0.4",
+    "lodash.assign": "^3.1.0",
+    "mkdirp": "^0.5.0",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0",
+    "watchify": "^3.2.1"
+  }
 }
