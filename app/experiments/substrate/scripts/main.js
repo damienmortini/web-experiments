@@ -1,5 +1,5 @@
-import SubstrateSystem from "dlib/substrate/SubstrateSystem";
-import SubstrateDebugRenderer from "dlib/substrate/SubstrateDebugRenderer";
+import SubstrateSystem from "../../../dlib/substrate/SubstrateSystem";
+import SubstrateDebugRenderer from "../../../dlib/substrate/SubstrateDebugRenderer";
 
 class Main {
   constructor() {

@@ -2,7 +2,7 @@
 
 let THREE = window.THREE;
 
-import GLSLView from 'dlib/webgl/GLSLView';
+import GLSLView from '../../../dlib/webgl/GLSLView';
 
 export default class View extends GLSLView{
   constructor (canvas, fragmentShaderStr, textureCanvas) {

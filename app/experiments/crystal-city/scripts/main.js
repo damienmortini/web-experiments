@@ -1,6 +1,6 @@
 'use strict';
 
-import BoidSystem from 'dlib/substrate/BoidSystem';
+import BoidSystem from '../../../dlib/substrate/SubstrateSystem';
 import View from './View';
 
 class Main {
