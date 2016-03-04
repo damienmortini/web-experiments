@@ -4,7 +4,7 @@
   "dependencies": {},
   "scripts": {
     "serve": "gulp serve",
-    "watch": "",
+    "watch": "brunch watch",
     "build": "gulp build",
     "_watchify": "watchify app/experiments/substrate/scripts/main.js -t babelify -o dist/experiments/substrate/scripts/main.js",
     "_browserify": "browserify app/experiments/substrate/scripts/main.js -t babelify -o dist/experiments/substrate/scripts/main.js",

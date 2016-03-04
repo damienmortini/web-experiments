@@ -1,6 +1,6 @@
 'use strict';
 
-import Shader from '../../../dlib/threejs/Shader';
+import Shader from '/bower_components/dlib/threejs/Shader';
 
 let THREE = window.THREE;
 let fetch = window.fetch;
