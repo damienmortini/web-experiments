@@ -1,5 +1,5 @@
-import SubstrateSystem from "../../../dlib/substrate/SubstrateSystem";
-import SubstrateDebugRenderer from "../../../dlib/substrate/SubstrateDebugRenderer";
+import SubstrateSystem from "dlib/extras/substrate/SubstrateSystem";
+import SubstrateDebugRenderer from "dlib/extras/substrate/SubstrateDebugRenderer";
 
 class Main {
   constructor() {
@@ -35,7 +35,7 @@ class Main {
 
     this.update();
 
-    this.substrateSystem.addBoid(this.canvas.width * 0.5, this.canvas.height * 0.5, Math.PI);
+    this.substrateSystem.spawnEdge(this.canvas.width * 0.5, this.canvas.height * 0.5, Math.PI);
   }
 
   onCanvasPointerDown () {
@@ -60,7 +60,7 @@ class Main {
 
     // if(this.pointer.down) {
       // if(Math.abs(this.pointer.previousX - this.pointer.x) > 0 && Math.abs(this.pointer.previousY - this.pointer.y) > 0) {
-      //   this.substrateSystem.addBoid(
+      //   this.substrateSystem.spawnEdge(
       //     this.pointer.x,
       //     this.pointer.y,
       //     velocityAngle,

@@ -1,34 +1,63 @@
 {
-  "name": "web-experiments",
-  "description": "Some experiments on the Web",
-  "dependencies": {},
+  "version": "0.0.2",
+  "description": "",
+  "main": "src/index.js",
   "scripts": {
-    "serve": "gulp serve",
-    "watch": "brunch watch",
-    "build": "gulp build",
-    "_watchify": "watchify app/experiments/substrate/scripts/main.js -t babelify -o dist/experiments/substrate/scripts/main.js",
-    "_browserify": "browserify app/experiments/substrate/scripts/main.js -t babelify -o dist/experiments/substrate/scripts/main.js",
-    "_mkdirp": "mkdirp dist/experiments/substrate/scripts"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://dmmn@github.com/dmmn/web-experiments.git"
+    "init": "npm update --save && jspm init --yes && jspm update && npm start",
+    "install": "jspm install",
+    "start": "browser-sync start --files \"src\" --server --no-notify --no-ghost-mode --startPath \"?dev\"",
+    "build": "jspm bundle src/index.js build/index.js",
+    "release": "jspm bundle src/index.js build/index.js --minify",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Damien Mortini",
-  "homepage": "https://github.com/dmmn/web-experiments",
-  "devDependencies": {
-    "babelify": "^6.0.2",
-    "browser-sync": "^2.7.1",
-    "browserify": "^10.1.1",
-    "browserify-shim": "^3.8.6",
-    "globby": "^2.0.0",
-    "gulp": "^3.8.11",
-    "gulp-changed": "^1.2.1",
-    "gulp-sourcemaps": "^1.5.2",
-    "gulp-util": "^3.0.4",
-    "lodash.assign": "^3.1.0",
-    "vinyl-buffer": "^1.0.0",
-    "vinyl-source-stream": "^1.1.0",
-    "watchify": "^3.2.1"
+  "license": "MIT",
+  "dependencies": {
+    "browser-sync": "^2.13.0",
+    "jspm": "^0.17.0-beta.22"
+  },
+  "jspm": {
+    "dependencies": {
+      "dlib": "npm:dlib@^0.0.4",
+      "text": "github:systemjs/plugin-text@^0.0.4",
+      "three": "npm:three@^0.78.0",
+      "webcomponents.js": "npm:webcomponents.js@^0.7.20"
+    },
+    "devDependencies": {
+      "babel": "npm:babel-core@^5.8.24",
+      "babel-runtime": "npm:babel-runtime@^5.8.24",
+      "core-js": "npm:core-js@^1.1.4",
+      "plugin-babel": "npm:systemjs-plugin-babel@^0.0.10"
+    },
+    "peerDependencies": {
+      "buffer": "github:jspm/nodelibs-buffer@^0.2.0-alpha",
+      "events": "github:jspm/nodelibs-events@^0.2.0-alpha",
+      "fs": "github:jspm/nodelibs-fs@^0.2.0-alpha",
+      "path": "github:jspm/nodelibs-path@^0.2.0-alpha",
+      "process": "github:jspm/nodelibs-process@^0.2.0-alpha"
+    },
+    "overrides": {
+      "npm:babel-core@5.8.38": {
+        "main": "browser.js",
+        "dependencies": {},
+        "jspmNodeConversion": false,
+        "map": {
+          "regenerator/runtime": "babel-runtime/regenerator/runtime"
+        },
+        "meta": {
+          "browser.js": {
+            "exports": "babel",
+            "format": "global"
+          }
+        }
+      },
+      "npm:babel-runtime@5.8.38": {
+        "main": false,
+        "dependencies": {},
+        "optionalDependencies": {
+          "core-js": "^1.2.0"
+        }
+      }
+    }
   }
 }
