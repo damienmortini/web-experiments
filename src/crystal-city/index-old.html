@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<style type="text/css">
+		html, body {
+			margin: 0;
+			overflow: hidden;
+			width: 100%;
+			height: 100%;
+			background-color: white;
+		}
+		canvas {
+			position: absolute;
+		}
+		#buffer {
+			transform-origin: 0 0;
+			-webkit-transform-origin: 0 0;
+			/*transform: scale(.5);*/
+			/*-webkit-transform: scale(.5);*/
+			width: 200px;
+			height: 200px;
+			/*visibility: hidden;*/
+		}
+		#scene {
+			width: 100%;
+			height: 100%;
+		}
+		</style>
+</head>
+<body>
+	<canvas id="buffer"></canvas>
+	<canvas id="scene"></canvas>
+	<script type="text/javascript" src="../../vendors/common.js"></script>
+	<script type="text/javascript" src="../../vendors/three.js"></script>
+
+	<script type="text/javascript">
+		// https://github.com/ironwallaby/delaunay
+		function Triangle(a,b,c){this.a=a,this.b=b,this.c=c;var k,l,m,n,d=b.x-a.x,e=b.y-a.y,f=c.x-a.x,g=c.y-a.y,h=d*(a.x+b.x)+e*(a.y+b.y),i=f*(a.x+c.x)+g*(a.y+c.y),j=2*(d*(c.y-b.y)-e*(c.x-b.x));Math.abs(j)<1e-6?(k=Math.min(a.x,b.x,c.x),l=Math.min(a.y,b.y,c.y),m=.5*(Math.max(a.x,b.x,c.x)-k),n=.5*(Math.max(a.y,b.y,c.y)-l),this.x=k+m,this.y=l+n,this.r=m*m+n*n):(this.x=(g*h-e*i)/j,this.y=(d*i-f*h)/j,m=this.x-a.x,n=this.y-a.y,this.r=m*m+n*n)}function byX(a,b){return b.x-a.x}function dedup(a){var c,d,e,f,g,b=a.length;a:for(;b;)for(d=a[--b],c=a[--b],e=b;e;)if(g=a[--e],f=a[--e],c===f&&d===g||c===g&&d===f){a.splice(b,2),a.splice(e,2),b-=2;continue a}}function triangulate(a){if(a.length<3)return[];a.sort(byX);for(var b=a.length-1,c=a[b].x,d=a[0].x,e=a[b].y,f=e;b--;)a[b].y<e&&(e=a[b].y),a[b].y>f&&(f=a[b].y);var o,p,q,g=d-c,h=f-e,i=g>h?g:h,j=.5*(d+c),k=.5*(f+e),l=[new Triangle({x:j-20*i,y:k-i,__sentinel:!0},{x:j,y:k+20*i,__sentinel:!0},{x:j+20*i,y:k-i,__sentinel:!0})],m=[],n=[];for(b=a.length;b--;){for(n.length=0,o=l.length;o--;)g=a[b].x-l[o].x,g>0&&g*g>l[o].r?(m.push(l[o]),l.splice(o,1)):(h=a[b].y-l[o].y,g*g+h*h>l[o].r||(n.push(l[o].a,l[o].b,l[o].b,l[o].c,l[o].c,l[o].a),l.splice(o,1)));for(dedup(n),o=n.length;o;)q=n[--o],p=n[--o],l.push(new Triangle(p,q,a[b]))}for(Array.prototype.push.apply(m,l),b=m.length;b--;)(m[b].a.__sentinel||m[b].b.__sentinel||m[b].c.__sentinel)&&m.splice(b,1);return m}Triangle.prototype.draw=function(a){a.beginPath(),a.moveTo(this.a.x,this.a.y),a.lineTo(this.b.x,this.b.y),a.lineTo(this.c.x,this.c.y),a.closePath(),a.stroke()},"undefined"!=typeof module&&(module.exports={Triangle:Triangle,triangulate:triangulate});
+	</script>
+
+	<script type="text/javascript">
+
+		//   /$$$$$$$            /$$       /$$
+		//  | $$__  $$          |__/      | $$
+		//  | $$  \ $$  /$$$$$$  /$$  /$$$$$$$
+		//  | $$$$$$$  /$$__  $$| $$ /$$__  $$
+		//  | $$__  $$| $$  \ $$| $$| $$  | $$
+		//  | $$  \ $$| $$  | $$| $$| $$  | $$
+		//  | $$$$$$$/|  $$$$$$/| $$|  $$$$$$$
+		//  |_______/  \______/ |__/ \_______/
+		//
+		//
+		//
+
+		var Boid = function ( x, y, angle ) {
+
+			this.x = x;
+			this.y = y;
+
+			this.angle = Math.pow( Math.random(), 20 ) + angle;
+			this.dx = Math.cos( this.angle );
+			this.dy = Math.sin( this.angle );
+
+			this.life = Math.random() * 100 + 20;
+			this.dead = false;
+
+			// this.color = 'rgba(' + ((Math.random() * 255)|0) + ', ' + ((Math.random() * 255)|0) + ', ' + ((Math.random() * 255)|0) + ', 1)';
+		}
+
+		Boid.prototype.update = function() {
+
+			// context.beginPath();
+			// context.moveTo( this.x, this.y );
+
+			this.x += this.dx * 1 ;
+			this.y += this.dy * 1;
+			this.life -= 1;
+
+			// context.lineTo( this.x, this.y );
+			// context.stroke();
+
+			var index = ( Math.floor( this.x ) + width * Math.floor( this.y ) ) * 4;
+
+			if ( this.life <= 0 ) this.kill();
+			else if ( IMAGE_DATA[ index + 3 ] > 0 ) this.kill();
+			else if ( this.x < 0 || this.x > width ) this.kill();
+			else if ( this.y < 0 || this.y > height ) this.kill();
+			else {
+				IMAGE_DATA[ index ] = IMAGE_DATA[ index + 1 ] = IMAGE_DATA[ index + 2 ] = 0;
+				IMAGE_DATA[ index + 3 ] = 255;
+				// context.putImageData(image, 0, 0);
+			}
+		}
+
+		Boid.prototype.kill = function() {
+			this.dead = true;
+		}
+
+		//    /$$$$$$
+		//   /$$__  $$
+		//  | $$  \__/  /$$$$$$$  /$$$$$$  /$$$$$$$   /$$$$$$
+		//  |  $$$$$$  /$$_____/ /$$__  $$| $$__  $$ /$$__  $$
+		//   \____  $$| $$      | $$$$$$$$| $$  \ $$| $$$$$$$$
+		//   /$$  \ $$| $$      | $$_____/| $$  | $$| $$_____/
+		//  |  $$$$$$/|  $$$$$$$|  $$$$$$$| $$  | $$|  $$$$$$$
+		//   \______/  \_______/ \_______/|__/  |__/ \_______/
+		//
+		//
+		//
+
+		Scene = function () {
+			var image, IMAGE_DATA;
+			var camera, scene, renderer, controls;
+			var city, ground;
+			var cityNeedsUpdate = false;
+
+			build();
+
+			var gui = new dat.GUI();
+
+			function build() {
+				camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
+				camera.position.z = 400;
+
+				controls = new THREE.TrackballControls(camera);
+
+				scene = new THREE.Scene();
+				scene.fog = new THREE.Fog(0xffffff, 1000, 2000);
+
+				renderer = new THREE.WebGLRenderer({canvas:document.getElementById('scene'), antialias:true});
+				renderer.setClearColor(0xffffff);
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				light = new THREE.DirectionalLight(0xeeeeff, 1);
+				light.position.x = SIZE;
+				light.position.y = SIZE;
+				// light.shadowCameraVisible = true;
+				light.castShadow = true;
+				scene.add(light);
+
+				texture = new THREE.Texture(canvas);
+				var geometry = new THREE.PlaneGeometry(SIZE, SIZE, PRECISION - 1, PRECISION - 1);
+
+				city = new THREE.Mesh( geometry, new THREE.ShaderMaterial(buildCityShader()));
+				city.position.y = 10;
+				city.rotation.x = -Math.PI * .5;
+				scene.add( city );
+
+				var groundGeometry = new THREE.PlaneGeometry(4000, 4000, 40, 40);
+				for (var i = groundGeometry.vertices.length - 1; i >= 0; i--) {
+					var vertice = groundGeometry.vertices[i];
+					vertice.x += Math.random()  * 50 - 25;
+					vertice.y += Math.random()  * 50 - 25;
+				};
+				ground = new THREE.Mesh(groundGeometry, new THREE.ShaderMaterial(buildGroundShader()));
+				ground.material.uniforms.emissive = { type: "c", value: new THREE.Color( 0x333333 ) };
+				ground.material.uniforms.specular = { type: "c", value: new THREE.Color( 0x888888 ) };
+				ground.material.uniforms.shininess = { type: "f", value: 1 };
+				scene.add(ground);
+
+				city.rotation.x = ground.rotation.x = -Math.PI * .5;
+
+				var groundCopy = ground.clone();
+				groundCopy.rotation.z = Math.PI;
+
+				scene.add(groundCopy);
+
+				groundCopy.material.uniforms = ground.material.uniforms;
+
+				renderer.shadowMapEnabled = true;
+
+				renderScene();
+
+				document.body.appendChild( renderer.domElement );
+			}
+
+			function buildCityShader () {
+				return {
+					transparent: true,
+					lights: true,
+					fog: true,
+
+					uniforms: THREE.UniformsUtils.merge( [
+
+						THREE.UniformsLib[ "common" ],
+						THREE.UniformsLib[ "bump" ],
+						THREE.UniformsLib[ "normalmap" ],
+						THREE.UniformsLib[ "fog" ],
+						THREE.UniformsLib[ "lights" ],
+						THREE.UniformsLib[ "shadowmap" ],
+
+						{
+							"ambient"  : { type: "c", value: new THREE.Color( 0xffffff ) },
+							"emissive" : { type: "c", value: new THREE.Color( 0x000000 ) },
+							"specular" : { type: "c", value: new THREE.Color( 0x111111 ) },
+							"shininess": { type: "f", value: 30 },
+							"wrapRGB"  : { type: "v3", value: new THREE.Vector3( 1, 1, 1 ) },
+							"uTime"     : { type: "f", value: 0.0 },
+							"uTexture"  : { type: "t", value: new THREE.Texture(canvas) },
+							"uHeight"  : { type: "f", value: 100 }
+						}
+
+					] ),
+
+					vertexShader: [
+
+						"#define PHONG",
+
+						"uniform float uTime;",
+						'uniform sampler2D uTexture;',
+						'uniform float uHeight;',
+
+						"varying vec3 vViewPosition;",
+						"varying vec3 vNormal;",
+						'varying vec2 vUv;',
+						'varying float vDistance;',
+
+						THREE.ShaderChunk[ "map_pars_vertex" ],
+						THREE.ShaderChunk[ "lightmap_pars_vertex" ],
+						THREE.ShaderChunk[ "envmap_pars_vertex" ],
+						THREE.ShaderChunk[ "lights_phong_pars_vertex" ],
+						THREE.ShaderChunk[ "color_pars_vertex" ],
+						THREE.ShaderChunk[ "morphtarget_pars_vertex" ],
+						THREE.ShaderChunk[ "skinning_pars_vertex" ],
+						THREE.ShaderChunk[ "shadowmap_pars_vertex" ],
+
+						"void main() {",
+							'vUv = uv;',
+
+							'vec3 position = position;',
+							'vDistance = sqrt(position.x * position.x + position.y * position.y);',
+							'position.z = texture2D(uTexture, uv).a * uHeight;',
+							'if(vDistance > 200.0) position.z -= 20.0;',
+
+							THREE.ShaderChunk[ "map_vertex" ],
+							THREE.ShaderChunk[ "lightmap_vertex" ],
+							THREE.ShaderChunk[ "color_vertex" ],
+
+							THREE.ShaderChunk[ "morphnormal_vertex" ],
+							THREE.ShaderChunk[ "skinbase_vertex" ],
+							THREE.ShaderChunk[ "skinnormal_vertex" ],
+							THREE.ShaderChunk[ "defaultnormal_vertex" ],
+
+							"vNormal = normalize( transformedNormal );",
+
+							THREE.ShaderChunk[ "morphtarget_vertex" ],
+							THREE.ShaderChunk[ "skinning_vertex" ],
+							THREE.ShaderChunk[ "default_vertex" ],
+
+							"vViewPosition = -mvPosition.xyz;",
+
+							THREE.ShaderChunk[ "worldpos_vertex" ],
+							THREE.ShaderChunk[ "envmap_vertex" ],
+							THREE.ShaderChunk[ "lights_phong_vertex" ],
+							THREE.ShaderChunk[ "shadowmap_vertex" ],
+
+							'vNormal.z = (position.z) / 10.0;',
+						"}"
+
+					].join("\n"),
+
+					fragmentShader: [
+						'#extension GL_OES_standard_derivatives : enable',
+
+						'uniform float uTime;',
+						"uniform vec3 diffuse;",
+						"uniform float opacity;",
+						'uniform sampler2D uTexture;',
+
+						"uniform vec3 ambient;",
+						"uniform vec3 emissive;",
+						"uniform vec3 specular;",
+						"uniform float shininess;",
+
+						'varying vec2 vUv;',
+						'varying float vDistance;',
+
+						THREE.ShaderChunk[ "color_pars_fragment" ],
+						THREE.ShaderChunk[ "map_pars_fragment" ],
+						THREE.ShaderChunk[ "lightmap_pars_fragment" ],
+						THREE.ShaderChunk[ "envmap_pars_fragment" ],
+						THREE.ShaderChunk[ "fog_pars_fragment" ],
+						THREE.ShaderChunk[ "lights_phong_pars_fragment" ],
+						THREE.ShaderChunk[ "shadowmap_pars_fragment" ],
+						THREE.ShaderChunk[ "bumpmap_pars_fragment" ],
+						THREE.ShaderChunk[ "normalmap_pars_fragment" ],
+						THREE.ShaderChunk[ "specularmap_pars_fragment" ],
+
+						"void main() {",
+							'float opacity = 1.0;',
+							// 'if(vDistance > 150.0)',
+							// 	'opacity = 1.0 - abs((vDistance - 150.0) / 50.0);',
+							'if(vDistance < uTime)',
+								'opacity = 1.0;',
+							'else',
+								'opacity = 0.0;',
+							"gl_FragColor = vec4( texture2D(uTexture, vUv).xyz, opacity );",
+							'vec3 vNormal = normalize(cross(dFdx(vViewPosition), dFdy(vViewPosition)));',
+
+							THREE.ShaderChunk[ "map_fragment" ],
+							THREE.ShaderChunk[ "alphatest_fragment" ],
+							THREE.ShaderChunk[ "specularmap_fragment" ],
+
+							THREE.ShaderChunk[ "lights_phong_fragment" ],
+
+							THREE.ShaderChunk[ "lightmap_fragment" ],
+							THREE.ShaderChunk[ "color_fragment" ],
+							THREE.ShaderChunk[ "envmap_fragment" ],
+							THREE.ShaderChunk[ "shadowmap_fragment" ],
+
+							THREE.ShaderChunk[ "linear_to_gamma_fragment" ],
+
+							THREE.ShaderChunk[ "fog_fragment" ],
+
+						"}"
+
+					].join("\n")
+
+				};
+			}
+
+			function buildGroundShader (wireframe) {
+				return {
+					lights: true,
+					fog: true,
+
+					uniforms: THREE.UniformsUtils.merge( [
+
+						THREE.UniformsLib[ "common" ],
+						THREE.UniformsLib[ "bump" ],
+						THREE.UniformsLib[ "normalmap" ],
+						THREE.UniformsLib[ "fog" ],
+						THREE.UniformsLib[ "lights" ],
+						THREE.UniformsLib[ "shadowmap" ],
+
+						{
+							"ambient"  : { type: "c", value: new THREE.Color( 0xffffff ) },
+							"emissive" : { type: "c", value: new THREE.Color( 0x000000 ) },
+							"specular" : { type: "c", value: new THREE.Color( 0x111111 ) },
+							"shininess": { type: "f", value: 30 },
+							"wrapRGB"  : { type: "v3", value: new THREE.Vector3( 1, 1, 1 ) },
+							"uTime"     : { type: "f", value: 0.0 }
+						}
+
+					] ),
+
+					vertexShader: [
+
+						"#define PHONG",
+
+						"uniform float uTime;",
+
+						"varying vec3 vViewPosition;",
+						"varying vec3 vNormal;",
+
+						THREE.ShaderChunk[ "map_pars_vertex" ],
+						THREE.ShaderChunk[ "lightmap_pars_vertex" ],
+						THREE.ShaderChunk[ "envmap_pars_vertex" ],
+						THREE.ShaderChunk[ "lights_phong_pars_vertex" ],
+						THREE.ShaderChunk[ "color_pars_vertex" ],
+						THREE.ShaderChunk[ "morphtarget_pars_vertex" ],
+						THREE.ShaderChunk[ "skinning_pars_vertex" ],
+						THREE.ShaderChunk[ "shadowmap_pars_vertex" ],
+
+						'vec3 mod289(vec3 x) {',
+						  'return x - floor(x * (1.0 / 289.0)) * 289.0;',
+						'}',
+
+						'vec2 mod289(vec2 x) {',
+						  'return x - floor(x * (1.0 / 289.0)) * 289.0;',
+						'}',
+
+						'vec3 permute(vec3 x) {',
+						  'return mod289(((x*34.0)+1.0)*x);',
+						'}',
+
+						'float snoise(vec2 v)',
+						  '{',
+						  'const vec4 C = vec4(0.211324865405187,  // (3.0-sqrt(3.0))/6.0',
+						                      '0.366025403784439,  // 0.5*(sqrt(3.0)-1.0)',
+						                     '-0.577350269189626,  // -1.0 + 2.0 * C.x',
+						                      '0.024390243902439); // 1.0 / 41.0',
+						'// First corner',
+						  'vec2 i  = floor(v + dot(v, C.yy) );',
+						  'vec2 x0 = v -   i + dot(i, C.xx);',
+
+						'// Other corners',
+						  'vec2 i1;',
+						  '//i1.x = step( x0.y, x0.x ); // x0.x > x0.y ? 1.0 : 0.0',
+						  '//i1.y = 1.0 - i1.x;',
+						  'i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);',
+						  '// x0 = x0 - 0.0 + 0.0 * C.xx ;',
+						  '// x1 = x0 - i1 + 1.0 * C.xx ;',
+						  '// x2 = x0 - 1.0 + 2.0 * C.xx ;',
+						  'vec4 x12 = x0.xyxy + C.xxzz;',
+						  'x12.xy -= i1;',
+
+						'// Permutations',
+						  'i = mod289(i); // Avoid truncation effects in permutation',
+						  'vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))',
+								'+ i.x + vec3(0.0, i1.x, 1.0 ));',
+
+						  'vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);',
+						  'm = m*m ;',
+						  'm = m*m ;',
+
+						'// Gradients: 41 points uniformly over a line, mapped onto a diamond.',
+						'// The ring size 17*17 = 289 is close to a multiple of 41 (41*7 = 287)',
+
+						  'vec3 x = 2.0 * fract(p * C.www) - 1.0;',
+						  'vec3 h = abs(x) - 0.5;',
+						  'vec3 ox = floor(x + 0.5);',
+						  'vec3 a0 = x - ox;',
+
+						'// Normalise gradients implicitly by scaling m',
+						'// Approximation of: m *= inversesqrt( a0*a0 + h*h );',
+						  'm *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );',
+
+						'// Compute final noise value at P',
+						  'vec3 g;',
+						  'g.x  = a0.x  * x0.x  + h.x  * x0.y;',
+						  'g.yz = a0.yz * x12.xz + h.yz * x12.yw;',
+						  'return 130.0 * dot(m, g);',
+						'}',
+
+						"void main() {",
+							'vec3 position = position;',
+							'position.z = snoise(position.yx + position.xy * position.yx) * 10.0 * sin(uTime * .5 * snoise(position.yx + position.xy));',
+
+							THREE.ShaderChunk[ "map_vertex" ],
+							THREE.ShaderChunk[ "lightmap_vertex" ],
+							THREE.ShaderChunk[ "color_vertex" ],
+
+							THREE.ShaderChunk[ "morphnormal_vertex" ],
+							THREE.ShaderChunk[ "skinbase_vertex" ],
+							THREE.ShaderChunk[ "skinnormal_vertex" ],
+							THREE.ShaderChunk[ "defaultnormal_vertex" ],
+
+							"vNormal = normalize( transformedNormal );",
+
+							THREE.ShaderChunk[ "morphtarget_vertex" ],
+							THREE.ShaderChunk[ "skinning_vertex" ],
+							THREE.ShaderChunk[ "default_vertex" ],
+
+							"vViewPosition = -mvPosition.xyz;",
+
+							THREE.ShaderChunk[ "worldpos_vertex" ],
+							THREE.ShaderChunk[ "envmap_vertex" ],
+							THREE.ShaderChunk[ "lights_phong_vertex" ],
+							THREE.ShaderChunk[ "shadowmap_vertex" ],
+
+							'vNormal.z = (position.z) / 10.0;',
+						"}"
+
+					].join("\n"),
+
+					fragmentShader: [
+						'#extension GL_OES_standard_derivatives : enable',
+
+						"uniform vec3 diffuse;",
+						"uniform float opacity;",
+
+						"uniform vec3 ambient;",
+						"uniform vec3 emissive;",
+						"uniform vec3 specular;",
+						"uniform float shininess;",
+
+						THREE.ShaderChunk[ "color_pars_fragment" ],
+						THREE.ShaderChunk[ "map_pars_fragment" ],
+						THREE.ShaderChunk[ "lightmap_pars_fragment" ],
+						THREE.ShaderChunk[ "envmap_pars_fragment" ],
+						THREE.ShaderChunk[ "fog_pars_fragment" ],
+						THREE.ShaderChunk[ "lights_phong_pars_fragment" ],
+						THREE.ShaderChunk[ "shadowmap_pars_fragment" ],
+						THREE.ShaderChunk[ "bumpmap_pars_fragment" ],
+						THREE.ShaderChunk[ "normalmap_pars_fragment" ],
+						THREE.ShaderChunk[ "specularmap_pars_fragment" ],
+
+						"void main() {",
+
+							"gl_FragColor = vec4( vec3 ( 1.0 ), opacity );",
+							(!wireframe) ? 'vec3 vNormal = normalize(cross(dFdx(vViewPosition), dFdy(vViewPosition)));' : '',
+
+							THREE.ShaderChunk[ "map_fragment" ],
+							THREE.ShaderChunk[ "alphatest_fragment" ],
+							THREE.ShaderChunk[ "specularmap_fragment" ],
+
+							THREE.ShaderChunk[ "lights_phong_fragment" ],
+							THREE.ShaderChunk[ "lightmap_fragment" ],
+							THREE.ShaderChunk[ "color_fragment" ],
+							THREE.ShaderChunk[ "envmap_fragment" ],
+							THREE.ShaderChunk[ "shadowmap_fragment" ],
+
+							THREE.ShaderChunk[ "linear_to_gamma_fragment" ],
+
+							THREE.ShaderChunk[ "fog_fragment" ],
+
+						"}"
+
+					].join("\n")
+
+				};
+			}
+
+			function renderScene() {
+				requestAnimationFrame( renderScene );
+				controls.update();
+				city.material.uniforms.uTexture.value.needsUpdate = true;
+				renderer.render( scene, camera );
+				ground.material.uniforms.uTime.value += .1;
+				if(cityNeedsUpdate) city.material.uniforms.uTime.value += 1;
+			}
+
+			Scene.prototype.buildCity = function() {
+				cityNeedsUpdate = true;
+			};
+		}
+
+		//   /$$      /$$           /$$
+		//  | $$$    /$$$          |__/
+		//  | $$$$  /$$$$  /$$$$$$  /$$ /$$$$$$$
+		//  | $$ $$/$$ $$ |____  $$| $$| $$__  $$
+		//  | $$  $$$| $$  /$$$$$$$| $$| $$  \ $$
+		//  | $$\  $ | $$ /$$__  $$| $$| $$  | $$
+		//  | $$ \/  | $$|  $$$$$$$| $$| $$  | $$
+		//  |__/     |__/ \_______/|__/|__/  |__/
+		//
+		//
+		//
+
+		var MAX_INTERSECTIONS = 10000;
+		var PRECISION = 200;
+		var SIZE = 200;
+
+		var canvas = document.getElementById( 'buffer' );
+		var context = canvas.getContext( '2d' );
+		var iterations = 0;
+		var width = canvas.offsetWidth;
+		var height = canvas.offsetHeight;
+		canvas.width = width;
+		canvas.height = height;
+		var stopBoidsAnimation = false;
+		var boids = [];
+
+		image = context.getImageData( 0, 0, width, height );
+		IMAGE_DATA = image.data;
+
+		function renderBoids() {
+			if (stopBoidsAnimation)
+				fillBuildings();
+			else
+				requestAnimationFrame( renderBoids );
+
+			for ( var j = 0; j < 20; j++ ) {
+				for ( var i = 0; i < boids.length; i++ ) {
+					var boid = boids[ i ];
+					boid.update();
+					if (boid.dead) {
+						boids.splice(boids.indexOf(boid), 1);
+						if (boids.length == 0) {
+							stopBoidsAnimation = true;
+						}
+					}
+					else if (Math.random() > .8 && boids.length < 500 ) {
+						boids.push( new Boid( boid.x, boid.y, ( Math.random() > 0.5 ? 90 : - 90 ) * Math.PI / 180 + boid.angle ) );
+						iterations++;
+					}
+				}
+			}
+		}
+
+		function fillBuildings() {
+			var offset, alpha;
+			var opacity = 0;
+			var baseColor = {r: Math.floor(255 * Math.random()), g: Math.floor(255 * Math.random()), b: Math.floor(255 * Math.random())};
+			var color = {r: 255, g: 255, b: 255}
+			for (var i = 0; i < height; i++) {
+				for (var j = 0; j < width; j++) {
+					offset = (i * width + j) * 4;
+					alpha = IMAGE_DATA[offset + 3]
+					IMAGE_DATA[offset + 3] = 255;
+					if (alpha > 0) {
+						IMAGE_DATA[offset] = IMAGE_DATA[offset + 1] = IMAGE_DATA[offset + 2] = IMAGE_DATA[offset + 3] = 0;
+						distanceFromCenter = Math.sqrt((width * .5 - j) * (width * .5 - j) + (height * .5 - i) * (height * .5 - i));
+						opacity = Math.floor(255 * Math.random() * (1 - (distanceFromCenter / (width * .5))));
+						if(Math.random() > 1) {
+							color.r = color.g = color.b = 255;
+						}
+						else {
+							// color.r = baseColor.r;
+							// color.g = baseColor.g;
+							// color.b = baseColor.b;
+							color = {r: Math.floor(255 * Math.random()), g: Math.floor(255 * Math.random()), b: Math.floor(255 * Math.random())}
+						}
+					}
+					else {
+						topPixelOffset = ((i - 1) * width + j) * 4
+						pixelOffset = 1
+						while (IMAGE_DATA[topPixelOffset + 3] == 0) {
+							topPixelOffset = ((i - 1) * width + (j - pixelOffset)) * 4
+							if (IMAGE_DATA[topPixelOffset + 3] == 0)
+								topPixelOffset = ((i - 1) * width + (j + pixelOffset)) * 4
+							pixelOffset++
+							if (pixelOffset > 0)
+								break
+						}
+						if (IMAGE_DATA[topPixelOffset + 3] != 0) {
+							color.r = IMAGE_DATA[topPixelOffset];
+							color.g = IMAGE_DATA[topPixelOffset + 1];
+							color.b = IMAGE_DATA[topPixelOffset + 2];
+							opacity = IMAGE_DATA[topPixelOffset + 3];
+						}
+						IMAGE_DATA[offset] = color.r;
+						IMAGE_DATA[offset + 1] = color.g;
+						IMAGE_DATA[offset + 2] = color.b;
+						IMAGE_DATA[offset + 3] = opacity;
+					}
+				};
+			};
+
+			context.putImageData(image, 0, 0);
+
+			scene.buildCity();
+		}
+
+		var scene = new Scene();
+		boids.push( new Boid( width / 2, height / 2, Math.random() * 360 * Math.PI / 180 ) );
+		renderBoids();
+	</script>
+</body>
+</html>

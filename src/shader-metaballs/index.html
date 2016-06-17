@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Shader metaballs</title>
+  <style>
+    body, html {
+      height: 100%;
+      overflow: hidden;
+      margin: 0;
+    }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+  </style>
+</head>
+<body>
+  <canvas></canvas>
+  <script id="fragment" type="x-shader/x-fragment" src="shaders/1/.frag"></script>
+  <script>
+    console.log(document.querySelector('#fragment')).innerText;
+    var canvas = document.querySelector('canvas');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+
+    var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(vertexShader,
+        'attribute vec2 a_position;' +
+        'varying vec2 v_position;' +
+        'void main() {' +
+            'gl_Position = vec4(a_position, 1, 1);' +
+            'v_position = a_position;' +
+        '}'
+    );
+    gl.compileShader(vertexShader);
+
+    // console.log( gl.getShaderInfoLog(vertexShader) );
+
+    var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(fragmentShader,
+      'precision mediump float;' +
+      'varying vec2 v_position;' +
+      'void main() {' +
+          'gl_FragColor = vec4(gl_FragCoord.xy / 1000.0, 1, 1);' +
+      '}'
+    );
+    gl.compileShader(fragmentShader);
+
+    // console.log( gl.getShaderInfoLog(fragmentShader) );
+
+    var program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+    gl.useProgram(program);
+
+    var buffer = gl.createBuffer();
+
+    var bufferData = [
+        -1, -1,
+        1, 1,
+        -1, 1
+    ];
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(bufferData), gl.STATIC_DRAW);
+
+    var a_position = gl.getAttribLocation(program, 'a_position');
+    gl.enableVertexAttribArray(a_position);
+    gl.vertexAttribPointer(a_position, 2, gl.FLOAT, false, 0, 0);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    function update() {
+      requestAnimationFrame(update);
+    }
+  </script>
+</body>
+</html>

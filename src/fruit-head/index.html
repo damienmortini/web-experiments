@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Hey Apple!</title>
+	<style type="text/css">
+		html, body {
+			height: 100%;
+		}
+		body {
+			margin: 0;
+			background-color: #bfffec;
+			font-family: sans-serif;
+		}
+		body:before {
+			content: "";
+			display: block;
+			position: absolute;
+			margin: auto;
+			width: 450px;
+			height: 80px;
+			top: 430px;
+			left: -20px;
+			bottom: 0;
+			right: 0;
+			background: radial-gradient(ellipse at center, rgba(0,0,0,0.4) 0%,rgba(0,0,0,0) 60%);
+		}
+		video, .tracker-canvas {
+			position: absolute;
+			width: 320px;
+			height: 240px;
+		}
+		video {
+			top: 0;
+		}
+		.tracker-canvas {
+			top: 240px;
+		}
+		.main-canvas {
+			width: 100%;
+			height: 100%;
+			position: absolute;
+			margin: auto;
+			top: 0;
+			left: 0;
+			bottom: 0;
+			right: 0;
+		}
+		.background {
+			position: absolute;
+			margin: auto;
+			width: 620px;
+			height: 560px;
+			top: -120px;
+			left: -40px;
+			bottom: 0;
+			right: 0;
+		}
+	</style>
+</head>
+<body>
+	<!-- <h1>Hey apple!</h1> -->
+	<video width="640" height="480" autoplay></video>
+	<img src="apple.png" class="background">
+	<div class="embed"></div>
+	<canvas class="main-canvas"></canvas>
+	<canvas width="640" height="480" class="tracker-canvas"></canvas>
+	<script src="../../scripts/vendors/clmtrackr.js"></script>
+	<script>
+	(function() {
+		'use strict';
+
+		var MOUTH_INSIDE_VERTICES_INDICES = [
+			[44, 61, 56],
+			[61, 60, 56],
+			[56, 60, 57],
+			[60, 59, 57],
+			[57, 59, 58],
+			[58, 59, 50]
+		];
+
+		var ENLARGE = 20;
+
+		var MOUTH_INDICES = [44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61];
+
+		var App = function() {
+			this.ctracker = new clm.tracker();
+			this.ctracker.init(pModel);
+			this.canvas = document.getElementsByClassName('main-canvas')[0];
+			this.canvas.width = window.innerWidth;
+			this.canvas.height = window.innerHeight;
+			this.trackerCanvas = document.getElementsByClassName('tracker-canvas')[0];
+			// this.mask = new Image();
+			// this.mask.src = 'mask.png';
+			this.ctx = this.canvas.getContext('2d');
+			this.trackerCtx = this.trackerCanvas.getContext('2d');
+			this.mouthRect = {x:0, y:0, width:0, height:0};
+			this.leftEyeRect = {x:0, y:0, width:0, height:0};
+			this.rightEyeRect = {x:0, y:0, width:0, height:0};
+
+			this.maskGradient = this.ctx.createRadialGradient(50,50,0,50,50,50);
+			this.maskGradient.addColorStop(0, 'rgba(255,0,0,1)');
+			this.maskGradient.addColorStop(1, 'rgba(0,0,0,1)');
+
+			navigator.getUserMedia({video: true}, this.onVideoSuccess.bind(this), function(){});
+		};
+
+		App.prototype.onVideoSuccess = function(localMediaStream) {
+			this.video = document.getElementsByTagName('video')[0];
+			this.video.src = window.URL.createObjectURL(localMediaStream);
+			this.ctracker.start(this.video);
+			// document.getElementsByClassName('embed')[0].innerHTML ='<iframe width="0" height="0" src="//www.youtube.com/embed/remCqzeY06M?rel=0&autoplay=1"></iframe>';
+			this.update();
+		};
+
+		App.prototype.update = function() {
+			requestAnimationFrame(this.update.bind(this));
+			this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+			var positions = this.ctracker.getCurrentPosition();
+
+			if(!positions) {
+				return;
+			}
+
+			this.mouthRect.x = positions[44][0];
+			this.mouthRect.y = positions[46][1];
+			this.mouthRect.width = positions[50][0] - this.mouthRect.x;
+			this.mouthRect.height = positions[53][1] - this.mouthRect.y;
+
+			this.leftEyeRect.x = positions[23][0];
+			this.leftEyeRect.y = positions[24][1];
+			this.leftEyeRect.width = positions[25][0] - this.leftEyeRect.x;
+			this.leftEyeRect.height = positions[26][1] - this.leftEyeRect.y;
+
+			this.rightEyeRect.x = positions[30][0];
+			this.rightEyeRect.y = positions[29][1];
+			this.rightEyeRect.width = positions[28][0] - this.rightEyeRect.x;
+			this.rightEyeRect.height = positions[31][1] - this.rightEyeRect.y;
+
+			this.ctx.save();
+			this.ctx.translate(100, 0);
+			this.ctx.drawImage(this.video, this.mouthRect.x - ENLARGE, this.mouthRect.y - ENLARGE, this.mouthRect.width + ENLARGE * 2, this.mouthRect.height + ENLARGE * 2, -80, 240, 800, 240);
+			this.ctx.drawImage(this.video, this.leftEyeRect.x - ENLARGE, this.leftEyeRect.y - ENLARGE, this.leftEyeRect.width + ENLARGE * 2, this.leftEyeRect.height + ENLARGE * 2, 60, 40, 200, 200);
+			this.ctx.drawImage(this.video, this.rightEyeRect.x - ENLARGE, this.rightEyeRect.y - ENLARGE, this.rightEyeRect.width + ENLARGE * 2, this.rightEyeRect.height + ENLARGE * 2, 360, 40, 200, 200);
+			this.ctx.restore();
+
+			// this.ctx.globalCompositeOperation = 'multiply';
+			// this.ctx.fillStyle = 'red';
+			// this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+			// this.ctx.globalCompositeOperation = 'destination-out';
+			this.ctx.fillStyle = this.maskGradient;
+			this.ctx.rect(0, 0, this.canvas.width, this.canvas.height);
+			this.ctx.fill();
+			this.ctx.save();
+			this.ctx.translate(200, 0);
+			this.ctx.rect(0, 0, this.canvas.width, this.canvas.height);
+			// this.ctx.fill();
+			this.ctx.restore();
+
+
+			// this.ctx.drawImage(this.mask, 0, 0, this.canvas.width, this.canvas.height);
+
+
+			this.trackerCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+			for (var i = pModel.path.vertices.length - 1; i >= 0; i--) {
+				this.drawTriangle(pModel.path.vertices[i], positions);
+			}
+			for (i = MOUTH_INSIDE_VERTICES_INDICES.length - 1; i >= 0; i--) {
+				this.drawTriangle(MOUTH_INSIDE_VERTICES_INDICES[i], positions);
+			}
+		};
+
+		App.prototype.drawTriangle = function(indices, positions) {
+			this.trackerCtx.save();
+			this.trackerCtx.beginPath();
+			this.trackerCtx.fillStyle = 'rgba('+
+				Math.floor(Math.random()*256)+','+
+				Math.floor(Math.random()*256)+','+
+				Math.floor(Math.random()*256)+', 0.2)';
+			this.trackerCtx.moveTo(positions[indices[0]][0], positions[indices[0]][1]);
+			this.trackerCtx.lineTo(positions[indices[1]][0], positions[indices[1]][1]);
+			this.trackerCtx.lineTo(positions[indices[2]][0], positions[indices[2]][1]);
+			this.trackerCtx.closePath();
+			this.trackerCtx.clip();
+			this.trackerCtx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+			this.trackerCtx.fill();
+			this.trackerCtx.stroke();
+			this.trackerCtx.restore();
+		};
+
+		navigator.getUserMedia  = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+
+		var app = new App();
+	})();
+
+	</script>
+</body>
+</html>
