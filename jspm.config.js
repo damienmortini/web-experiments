@@ -26,22 +26,17 @@ SystemJS.config({
     "github:*/*.json"
   ],
   map: {
-    "buffer": "github:jspm/nodelibs-buffer@0.2.0-alpha",
+    "buffer": "npm:jspm-nodelibs-buffer@0.2.0",
     "dlib": "npm:dlib@0.0.4",
-    "events": "github:jspm/nodelibs-events@0.2.0-alpha",
-    "fs": "github:jspm/nodelibs-fs@0.2.0-alpha",
-    "path": "github:jspm/nodelibs-path@0.2.0-alpha",
-    "process": "github:jspm/nodelibs-process@0.2.0-alpha",
+    "events": "npm:jspm-nodelibs-events@0.2.0",
+    "fs": "npm:jspm-nodelibs-fs@0.2.0",
+    "path": "npm:jspm-nodelibs-path@0.2.0",
+    "process": "npm:jspm-nodelibs-process@0.2.0",
     "text": "github:systemjs/plugin-text@0.0.4",
     "three": "npm:three@0.78.0",
     "webcomponents.js": "npm:webcomponents.js@0.7.22"
   },
   packages: {
-    "github:jspm/nodelibs-buffer@0.2.0-alpha": {
-      "map": {
-        "buffer-browserify": "npm:buffer@4.6.0"
-      }
-    },
     "npm:buffer@4.6.0": {
       "map": {
         "base64-js": "npm:base64-js@1.1.2",
@@ -92,6 +87,11 @@ SystemJS.config({
       "map": {
         "d": "npm:d@0.1.1",
         "es5-ext": "npm:es5-ext@0.10.11"
+      }
+    },
+    "npm:jspm-nodelibs-buffer@0.2.0": {
+      "map": {
+        "buffer-browserify": "npm:buffer@4.6.0"
       }
     }
   }
